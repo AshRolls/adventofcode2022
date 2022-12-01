@@ -1,10 +1,11 @@
-﻿namespace AdventOfCode;
+﻿/*
+namespace AdventOfCode;
 
-public class Day01 : BaseDay
+public class DayXX : BaseDay
 {
     private readonly string[] _input;
 
-    public Day01()
+    public DayXX()
     {
         _input = File.ReadAllLines(InputFilePath);
     }
@@ -18,4 +19,4 @@ public class Day01 : BaseDay
     {
         return new("Not Solved");
     }
-}
+}*/
