@@ -22,12 +22,15 @@ public class Day01 : BaseDay
             {
                 currentCal = 0;
             }
-            int lineCal;
-            Int32.TryParse(s, out lineCal);
-            currentCal += lineCal;
-            if (currentCal > highestCal)
+            else
             {
-                highestCal = currentCal;
+                int lineCal;
+                Int32.TryParse(s, out lineCal);
+                currentCal += lineCal;
+                if (currentCal > highestCal)
+                {
+                    highestCal = currentCal;
+                }
             }
         }
 
@@ -36,6 +39,28 @@ public class Day01 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        return new("Not Solved");
+        int currentCal = 0;
+        List<int> cals = new List<int>();
+
+        foreach (string s in _input)
+        {
+            if (s.Length == 0)
+            {
+                cals.Add(currentCal);
+                currentCal = 0;
+            }
+            else
+            {
+                int lineCal;
+                Int32.TryParse(s, out lineCal);
+                currentCal += lineCal;                
+            }
+        }
+
+        cals.Sort();
+        cals.Reverse();
+        int topThree = cals.Take(3).Sum();        
+
+        return new(topThree.ToString());
     }
 }
