@@ -73,6 +73,57 @@ public class Day02 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        return new("Not Solved");
+        resultMap ax;
+        ax.input = "A X";
+        ax.score = 3; 
+
+        resultMap ay;
+        ay.input = "A Y";
+        ay.score = 4; 
+
+        resultMap az;
+        az.input = "A Z";
+        az.score = 8; 
+
+        resultMap bx;
+        bx.input = "B X";
+        bx.score = 1; 
+
+        resultMap by;
+        by.input = "B Y";
+        by.score = 5; 
+
+        resultMap bz;
+        bz.input = "B Z";
+        bz.score = 9; 
+
+        resultMap cx;
+        cx.input = "C X";
+        cx.score = 2; 
+
+        resultMap cy;
+        cy.input = "C Y";
+        cy.score = 6;
+
+        resultMap cz;
+        cz.input = "C Z";
+        cz.score = 7; 
+
+        resultMap[] r = new resultMap[] { ax, ay, az, bx, by, bz, cx, cy, cz };
+
+        int score = 0;
+        foreach (string line in _input)
+        {
+            foreach (resultMap res in r)
+            {
+                if (res.input == line)
+                {
+                    score += res.score;
+                    break;
+                }
+            }
+        }
+
+        return new(score.ToString());
     }
 }
