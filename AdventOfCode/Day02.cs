@@ -75,7 +75,7 @@ public class Day02 : BaseDay
     
     public override ValueTask<string> Solve_2()
     {
-        Hashtable r = new Hashtable();
+        Dictionary<string,int> r = new Dictionary<string, int>();
         r.Add("A X", 3);
         r.Add("A Y", 4);
         r.Add("A Z", 8);
@@ -89,7 +89,7 @@ public class Day02 : BaseDay
         int score = 0;
         foreach (string line in _input)
         {
-            score += (int)r[line];
+            score += r[line];
         }
 
         return new(score.ToString());
