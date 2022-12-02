@@ -1,4 +1,6 @@
-﻿namespace AdventOfCode;
+﻿using System.Collections;
+
+namespace AdventOfCode;
 
 public class Day02 : BaseDay
 {
@@ -70,58 +72,24 @@ public class Day02 : BaseDay
 
         return new(score.ToString());
     }
-
+    
     public override ValueTask<string> Solve_2()
     {
-        resultMap ax;
-        ax.input = "A X";
-        ax.score = 3; 
-
-        resultMap ay;
-        ay.input = "A Y";
-        ay.score = 4; 
-
-        resultMap az;
-        az.input = "A Z";
-        az.score = 8; 
-
-        resultMap bx;
-        bx.input = "B X";
-        bx.score = 1; 
-
-        resultMap by;
-        by.input = "B Y";
-        by.score = 5; 
-
-        resultMap bz;
-        bz.input = "B Z";
-        bz.score = 9; 
-
-        resultMap cx;
-        cx.input = "C X";
-        cx.score = 2; 
-
-        resultMap cy;
-        cy.input = "C Y";
-        cy.score = 6;
-
-        resultMap cz;
-        cz.input = "C Z";
-        cz.score = 7; 
-
-        resultMap[] r = new resultMap[] { ax, ay, az, bx, by, bz, cx, cy, cz };
+        Hashtable r = new Hashtable();
+        r.Add("A X", 3);
+        r.Add("A Y", 4);
+        r.Add("A Z", 8);
+        r.Add("B X", 1);
+        r.Add("B Y", 5);
+        r.Add("B Z", 9);
+        r.Add("C X", 2);
+        r.Add("C Y", 6);
+        r.Add("C Z", 7);
 
         int score = 0;
         foreach (string line in _input)
         {
-            foreach (resultMap res in r)
-            {
-                if (res.input == line)
-                {
-                    score += res.score;
-                    break;
-                }
-            }
+            score += (int)r[line];
         }
 
         return new(score.ToString());
