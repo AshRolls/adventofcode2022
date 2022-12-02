@@ -44,7 +44,7 @@ public class Day01 : BaseDay
 
         foreach (string s in _input)
         {
-            if (s.Length == 0)
+            if (s.Length == 0) // doesn't check final elf
             {
                 cals.Add(currentCal);
                 currentCal = 0;
