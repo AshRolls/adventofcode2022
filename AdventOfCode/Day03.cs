@@ -41,6 +41,30 @@ public class Day03 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        return new("Not Solved");
+        int total = 0;
+        int count = 0;
+        for (int i=0; i<_input.Length-2; i+=3)            
+        {
+            byte[] first = Encoding.ASCII.GetBytes(_input[i]);
+            byte[] second = Encoding.ASCII.GetBytes(_input[i + 1]);
+            byte[] third = Encoding.ASCII.GetBytes(_input[i + 2]);
+
+            List<byte> common = first.Intersect(second).Intersect(third).ToList();
+            Debug.Assert(common.Count() == 1);
+
+            int priority = 0;
+            foreach (byte b in common)
+            {
+                int p = b;
+                if (b < 91) p -= (64 - 26);
+                else p -= 96;
+                priority += p;
+            }
+            total += priority;
+            count++;
+        }
+
+        Debug.Assert(count == 100);
+        return new(total.ToString());
     }
 }
