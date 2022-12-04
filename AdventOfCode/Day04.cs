@@ -27,6 +27,23 @@ public class Day04 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        return new("Not Solved");
+        int c = 0;
+        foreach (string s in _input)
+        {
+            string[] pair = s.Split(',');
+            int[] first = Array.ConvertAll(pair[0].Split('-'), str => int.Parse(str));
+            int[] second = Array.ConvertAll(pair[1].Split('-'), str => int.Parse(str));
+
+            int zero = Math.Min(first[0], second[0]);
+            first[0] -= zero;
+            first[1] -= zero;
+            second[0] -= zero;
+            second[1] -= zero;
+
+            if (first[0] == 0 && second[0] <= first[1]) c++;
+            else if (second[0] == 0 && first[0] <= second[1]) c++;
+        }
+
+        return new(c.ToString());
     }
 }
