@@ -1,4 +1,6 @@
-﻿namespace AdventOfCode;
+﻿using System.Security.Principal;
+
+namespace AdventOfCode;
 
 public class Day04 : BaseDay
 {
@@ -34,16 +36,17 @@ public class Day04 : BaseDay
             int[] first = Array.ConvertAll(pair[0].Split('-'), str => int.Parse(str));
             int[] second = Array.ConvertAll(pair[1].Split('-'), str => int.Parse(str));
 
-            int zero = Math.Min(first[0], second[0]);
-            first[0] -= zero;
-            first[1] -= zero;
-            second[0] -= zero;
-            second[1] -= zero;
-
-            if (first[0] == 0 && second[0] <= first[1]) c++;
-            else if (second[0] == 0 && first[0] <= second[1]) c++;
+            var r1 = EnumerateTo(first[0], first[1]);
+            var r2 = EnumerateTo(second[0], second[1]);
+            
+            if (r1.Intersect(r2).Count() > 0) c++;
         }
 
         return new(c.ToString());
+    }
+
+    public IEnumerable<int> EnumerateTo(int from, int to)
+    {
+        for (int i=from;i<=to;i++) yield return i;        
     }
 }
