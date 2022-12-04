@@ -15,9 +15,9 @@ jobs:
       - uses: actions/checkout@v2
       - uses: joblo2213/aoc-badges-action@v3
         with:
-          userid: 658601
+          userid: 2303434
           session: ${{ secrets.AOCSESSION }}
-          year: 2021 
+          year: 2022 
       - uses: stefanzweifel/git-auto-commit-action@v4
         name: 📤 Push
         with:
