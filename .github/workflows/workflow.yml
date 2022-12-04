@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '**/Day*.java' # only if a days source file was modified
+      - '**.txt' # only trigger on pushes with new/changes to input
 jobs:
   build:
     name: ⭐ Update badges 📅
