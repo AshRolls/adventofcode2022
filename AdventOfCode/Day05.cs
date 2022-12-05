@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace AdventOfCode;
 
@@ -26,7 +25,7 @@ public class Day05 : BaseDay
                 if (s[stackIdx] != ' ') st[i].Push(s[stackIdx]);                
             }
         }
-
+        
         for (int i = 0; i < 9; i++)
         {
             st[i] = new Stack<char>(st[i]);
@@ -34,7 +33,7 @@ public class Day05 : BaseDay
 
         for (int i = 10; i < _input.Length; i++)
         {
-            int[] move = Array.ConvertAll(Regex.Matches(_input[i], @"[0-9]+").OfType<Match>().Select(m => m.Groups[0].Value).ToArray(), x => int.Parse(x));
+            int[] move = AoCHelper.numFromStr(_input[i]);
             for (int j = 0; j < move[0]; j++)
             {
                 st[move[2]-1].Push(st[move[1] - 1].Pop());
@@ -73,7 +72,7 @@ public class Day05 : BaseDay
         Stack<char> q = new Stack<char>();
         for (int i = 10; i < _input.Length; i++)
         {
-            int[] move = Array.ConvertAll(Regex.Matches(_input[i], @"[0-9]+").OfType<Match>().Select(m => m.Groups[0].Value).ToArray(), x => int.Parse(x));
+            int[] move = AoCHelper.numFromStr(_input[i]);
             
             for (int j = 0; j < move[0]; j++)
             {
