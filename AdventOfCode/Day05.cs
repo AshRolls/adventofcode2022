@@ -33,7 +33,7 @@ public class Day05 : BaseDay
 
         for (int i = 10; i < _input.Length; i++)
         {
-            int[] move = AoCHelper.numFromStr(_input[i]);
+            int[] move = AoCHelper.NumsFromStr(_input[i]);
             for (int j = 0; j < move[0]; j++)
             {
                 st[move[2]-1].Push(st[move[1] - 1].Pop());
@@ -43,7 +43,7 @@ public class Day05 : BaseDay
         string topCrates = String.Empty;
         for (int i = 0; i < 9; i++)
         {
-            topCrates += st[i].Pop();
+            topCrates += st[i].Peek();
         }
 
         return new(topCrates);
@@ -72,7 +72,7 @@ public class Day05 : BaseDay
         Stack<char> q = new Stack<char>();
         for (int i = 10; i < _input.Length; i++)
         {
-            int[] move = AoCHelper.numFromStr(_input[i]);
+            int[] move = AoCHelper.NumsFromStr(_input[i]);
             
             for (int j = 0; j < move[0]; j++)
             {
@@ -85,12 +85,8 @@ public class Day05 : BaseDay
             Debug.Assert(q.Count() == 0);
         }
 
-        string topCrates = String.Empty;
-        for (int i = 0; i < 9; i++)
-        {
-            topCrates += st[i].Pop();
-        }
-
+        string topCrates = String.Concat(st.Select(s => s.Peek()));
+        
         return new(topCrates);
     }
 }
