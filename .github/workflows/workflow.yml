@@ -1,11 +1,6 @@
 name: 🎄 Advent of Code Badges 🎄
 on:
-  schedule:
-    - cron: '1 5 1-25 12 *'
   workflow_dispatch:
-  push:
-    paths:
-      - '**.txt' # only trigger on pushes with new/changes to input
 jobs:
   build:
     name: ⭐ Update badges 📅
