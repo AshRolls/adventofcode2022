@@ -1,4 +1,5 @@
-﻿using System.Reflection.Metadata.Ecma335;
+﻿using System.Collections.Immutable;
+using System.Reflection.Metadata.Ecma335;
 using System.Xml.Xsl;
 
 namespace AdventOfCode;
@@ -15,10 +16,35 @@ public class Day07 : BaseDay
     public override ValueTask<string> Solve_1()
     {
         dir root = new dir(null);
-        
+        setupFS(root);
+
+        List<dir> dirs = new List<dir>();
+        root.getDirsUnderSize(dirs, 100000);
+        long size = dirs.Select(x => x.AllSize).Sum();
+
+        return new(size.ToString());
+    }
+
+    public override ValueTask<string> Solve_2()
+    {
+        dir root = new dir(null);
+        setupFS(root);
+
+        long unusedSpace = 70000000 - root.AllSize;
+        long spaceToFree = 30000000 - unusedSpace;
+
+        List<dir> dirs = new List<dir>();
+        root.getDirsUnderSize(dirs, 70000000);
+        var d = dirs.Select(x => x.AllSize).Where(x => x > spaceToFree).Min();
+
+        return new(d.ToString());
+    }
+
+    private void setupFS(dir root)
+    {
         dir cur = root;
-        int i = 1;        
-        do 
+        int i = 1;
+        do
         {
             if (_input[i][0] == '$')
             {
@@ -30,26 +56,15 @@ public class Day07 : BaseDay
                 {
                     cmdLS(cur);
                 }
-            }            
+            }
             else
             {
                 addFileOrDirectory(cur, _input[i]);
-            }            
+            }
             i++;
-        } while (i < _input.Length) ;
+        } while (i < _input.Length);
 
         root.getSizeAllChildren(); // sets AllSizes for each dir
-        
-        List<dir> dirs = new List<dir>();
-        root.getDirsUnderSize(dirs, 100000);
-        long size = dirs.Select(x => x.AllSize).Sum();
-
-        return new(size.ToString());
-    }
-
-    public override ValueTask<string> Solve_2()
-    {
-        return new("Not Solved");
     }
 
     private void addFileOrDirectory(dir cur, string line)
