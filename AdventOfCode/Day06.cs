@@ -26,8 +26,7 @@ public class Day06 : BaseDay
         int i;
         for (i = 0; i < _input[0].Length - windowLength; i++)
         {
-            var cur = _input[0].Skip(i).Take(windowLength);
-            if (cur.Distinct().Count() == windowLength) break; 
+            if (_input[0].Skip(i).Take(windowLength).Distinct().Count() == windowLength) break;
         }
         return i + windowLength;
     }
