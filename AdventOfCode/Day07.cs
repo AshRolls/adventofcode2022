@@ -15,10 +15,10 @@ public class Day07 : BaseDay
 
     public override ValueTask<string> Solve_1()
     {
-        dir root = new dir(null);
+        Dir root = new Dir(null);
         setupFS(root);
 
-        List<dir> dirs = new List<dir>();
+        List<Dir> dirs = new List<Dir>();
         root.getDirsUnderSize(dirs, 100000);
         long size = dirs.Select(x => x.AllSize).Sum();
 
@@ -27,22 +27,22 @@ public class Day07 : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        dir root = new dir(null);
+        Dir root = new Dir(null);
         setupFS(root);
 
         long unusedSpace = 70000000 - root.AllSize;
         long spaceToFree = 30000000 - unusedSpace;
 
-        List<dir> dirs = new List<dir>();
+        List<Dir> dirs = new List<Dir>();
         root.getDirsUnderSize(dirs, 70000000);
         var d = dirs.Select(x => x.AllSize).Where(x => x > spaceToFree).Min();
 
         return new(d.ToString());
     }
 
-    private void setupFS(dir root)
+    private void setupFS(Dir root)
     {
-        dir cur = root;
+        Dir cur = root;
         int i = 1;
         do
         {
@@ -67,7 +67,7 @@ public class Day07 : BaseDay
         root.getSizeAllChildren(); // sets AllSizes for each dir
     }
 
-    private void addFileOrDirectory(dir cur, string line)
+    private void addFileOrDirectory(Dir cur, string line)
     {
         var str = line.Split(' ');
         if (str[0].ToString() == "dir")
@@ -80,7 +80,7 @@ public class Day07 : BaseDay
         }
     }
 
-    private void cmdCD(ref dir cur, string line)
+    private void cmdCD(ref Dir cur, string line)
     {
         string[] str = line.Split(' ');
         if (str[2] == "..")
@@ -93,29 +93,29 @@ public class Day07 : BaseDay
         }
     }
 
-    private void cmdLS(dir cur)
+    private void cmdLS(Dir cur)
     {                
         cur.Size = 0;                 
     }
 
-    private class dir
+    private class Dir
     {        
-        public dir(dir parent)
+        public Dir(Dir parent)
         {            
-            subdirs = new Dictionary<string, dir>();
+            subdirs = new Dictionary<string, Dir>();
             Size = 0;
             Parent = parent;
         }       
-        private Dictionary<string, dir> subdirs { get; set; }
-        internal dir Parent { get; set; }
+        private Dictionary<string, Dir> subdirs { get; set; }
+        internal Dir Parent { get; set; }
         internal long Size { get; set; }
         internal long AllSize { get; set; }
 
         internal void AddDir(string name)
         {
-            subdirs.Add(name, new dir(this));
+            subdirs.Add(name, new Dir(this));
         }
-        internal dir GetSubDir(string name)
+        internal Dir GetSubDir(string name)
         {
             return subdirs[name];
         }
@@ -124,7 +124,7 @@ public class Day07 : BaseDay
         {
             long allSize = 0; // dont know size of children
             allSize += Size; // add size of files in this dir
-            foreach (dir d in subdirs.Values) // add allsize of children
+            foreach (Dir d in subdirs.Values) // add allsize of children
             {                
                 allSize += d.getSizeAllChildren();
             }            
@@ -132,10 +132,10 @@ public class Day07 : BaseDay
             return allSize;
         }
 
-        internal void getDirsUnderSize(List<dir> dirs, int max)
+        internal void getDirsUnderSize(List<Dir> dirs, int max)
         {
             if (this.AllSize < max) dirs.Add(this);
-            foreach (dir d in subdirs.Values) // add allsize of children
+            foreach (Dir d in subdirs.Values) // add allsize of children
             {
                 d.getDirsUnderSize(dirs, max);
             }
