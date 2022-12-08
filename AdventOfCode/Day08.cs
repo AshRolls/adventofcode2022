@@ -26,9 +26,9 @@ public class Day08 : BaseDay
     public void processFrame()
     {
         processQueue();
-        for (int x = 0; x< 99; x++)
+        for (int x = 0; x < 99; x++)
         {
-            for (int y =0; y<99; y++)
+            for (int y = 0; y < 99; y++)
             {
                 DrawRectangle((int)recs[x,y].x, (int)recs[x, y].y, (int)recs[x, y].width, (int)recs[x, y].height, GREEN);
             }
@@ -38,9 +38,8 @@ public class Day08 : BaseDay
     {        
         RenderItem r;
         int thisFrame = 0;
-        while (_renderQueue.TryDequeue(out r) && thisFrame <= MAX_PER_FRAME)
-        {
-            thisFrame++;
+        while (_renderQueue.TryDequeue(out r))
+        {            
             if (r != null)
             {
                 switch (r.Type)
@@ -53,6 +52,7 @@ public class Day08 : BaseDay
                         break;
                 }
             }
+            if (thisFrame++ >= MAX_PER_FRAME) break;
         }
     }
 
@@ -126,9 +126,8 @@ public class Day08 : BaseDay
             {
                 if (visible[x, y])
                 {
-                    visC++;
-                    //
                     _renderQueue.Enqueue(new RenderItem(0, x, y));
+                    visC++;                    
                 }
             }
         }
