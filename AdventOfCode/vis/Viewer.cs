@@ -61,7 +61,7 @@ namespace AdventOfCode.vis
             }
             CloseWindow();
             if (ViewerOptions.recordVideo) ff_writer.finish();
-            await ff_task;
+            _ = await ff_task;
         }
     }
 }
