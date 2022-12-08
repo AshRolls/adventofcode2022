@@ -3,6 +3,7 @@ using static Raylib_cs.Raylib;
 using static Raylib_cs.Color;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Collections.Concurrent;
 
 namespace AdventOfCode.vis
 {
@@ -27,7 +28,7 @@ namespace AdventOfCode.vis
             ff_writer = new FFWriter(width, height, fps, title);
         }
 
-        public async void loop(Action render)
+        public async void StartViewer(Action render)
         {
             int cnt = 0;
             var ff_task = Task.Run(() => { if (ViewerOptions.recordVideo) return ff_writer.run(); else return true; });

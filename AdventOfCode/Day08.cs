@@ -8,10 +8,8 @@ namespace AdventOfCode;
 
 public class Day08 : BaseDay
 {
-    private readonly string[] _input;
-    private readonly int MAX_PER_FRAME = 30;
-    Viewer _renderer = new Viewer(990, 990, 30, "Day08");
-    ConcurrentQueue<RenderItem> _renderQueue = new ConcurrentQueue<RenderItem>();
+    private readonly string[] _input;        
+    private Day08Vis visualiser = new Day08Vis();
 
     private string partOne;
     private string partTwo;
@@ -20,46 +18,10 @@ public class Day08 : BaseDay
     {
         _input = File.ReadAllLines(InputFilePath);        
     }
-
-    internal Rectangle[,] recs = new Rectangle[99, 99];
-
-    public void processFrame()
-    {
-        processQueue();
-        for (int x = 0; x < 99; x++)
-        {
-            for (int y = 0; y < 99; y++)
-            {
-                DrawRectangle((int)recs[x,y].x, (int)recs[x, y].y, (int)recs[x, y].width, (int)recs[x, y].height, GREEN);
-            }
-        }
-    }
-    public void processQueue()
-    {        
-        RenderItem r;
-        int thisFrame = 0;
-        while (_renderQueue.TryDequeue(out r))
-        {            
-            if (r != null)
-            {
-                switch (r.Type)
-                {
-                    case 0:
-                        recs[r.X, r.Y].x = r.X * 10;
-                        recs[r.X, r.Y].y = r.Y * 10;
-                        recs[r.X, r.Y].width = 10;
-                        recs[r.X, r.Y].height = 10;
-                        break;
-                }
-            }
-            if (thisFrame++ >= MAX_PER_FRAME) break;
-        }
-    }
-
+   
     public override ValueTask<string> Solve_1()
     {
-        Task.Run(() => solve1());
-        _renderer.loop(processFrame);        
+        visualiser.StartVisualiser(solve1);   
         return new(partOne);
     }
 
@@ -126,7 +88,7 @@ public class Day08 : BaseDay
             {
                 if (visible[x, y])
                 {
-                    _renderQueue.Enqueue(new RenderItem(0, x, y));
+                    visualiser.AddRenderItem(new RenderItem(0, x, y));
                     visC++;                    
                 }
             }
