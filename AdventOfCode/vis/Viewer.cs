@@ -26,7 +26,7 @@ namespace AdventOfCode.vis
             ff_writer = new FFWriter(width, height, fps, title);
         }
 
-        public async void loop(Func<int, bool> renderFrame)
+        public async void loop(Func<bool> render)
         {
             int cnt = 0;
             bool done = false;
@@ -38,7 +38,7 @@ namespace AdventOfCode.vis
             {
                 BeginDrawing();
                 ClearBackground(BLACK);
-                done = renderFrame(cnt++);
+                done = render();
                 EndDrawing();
                 if (ViewerOptions.recordVideo)
                 {

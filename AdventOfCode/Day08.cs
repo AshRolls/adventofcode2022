@@ -1,12 +1,17 @@
 ﻿using AdventOfCode.vis;
-using Spectre.Console;
+using Raylib_cs;
+using static Raylib_cs.Raylib;
+using static Raylib_cs.Color;
 
 namespace AdventOfCode;
 
 public class Day08 : BaseDay
 {
     private readonly string[] _input;
-    ASCIIRay renderer = new ASCIIRay(1080, 1080, 30, 10, "Day08");
+    Viewer renderer = new Viewer(990, 990, 30, "Day08");    
+
+    private string partOne;
+    private string partTwo;
 
     public Day08()
     {
@@ -15,19 +20,17 @@ public class Day08 : BaseDay
 
     public override ValueTask<string> Solve_1()
     {
-        //renderer.loop(x => solve1(x));
-
-        return new("rendering");
+        renderer.loop(solve1);
+        return new(partOne);
     }
 
     public override ValueTask<string> Solve_2()
     {
-        renderer.loop(x => solve2(x));
-
-        return new("Not Solved");
+        solve2();
+        return new(partTwo);
     }
 
-    private bool solve1(int idx)
+    private bool solve1()
     {
         byte[,] grid = new byte[99, 99];
         bool[,] visible = new bool[99, 99];
@@ -37,16 +40,15 @@ public class Day08 : BaseDay
         {
             for (int y = 1; y < 98; y++)
             {
-                setVisible(grid, visible, x, y);
+                setVisible(grid, visible, x, y);                
             }
         }
 
-        int visC = getVisibleCount(visible);
-
+        partOne = getVisibleCount(visible).ToString();
         return false;
     }
 
-    private bool solve2(int idx)
+    private bool solve2()
     {
         byte[,] grid = new byte[99, 99];
         bool[,] visible = new bool[99, 99];
@@ -61,8 +63,7 @@ public class Day08 : BaseDay
             }
         }
 
-        int highS = getHighestScenic(scenic);
-
+        partTwo = getHighestScenic(scenic).ToString();
         return false;
     }
 
@@ -73,8 +74,7 @@ public class Day08 : BaseDay
         {
             for (int y = 1; y < 98; y++)
             {
-                if (scenic[x, y] > highest) highest = scenic[x,y];
-                renderer.WriteXY(x, y, scenic[x,y].ToString());
+                if (scenic[x, y] > highest) highest = scenic[x,y];                
             }
         }
         return highest;
@@ -90,7 +90,7 @@ public class Day08 : BaseDay
                 if (visible[x, y])
                 {
                     visC++;
-                    renderer.WriteXY(x, y, "X");
+                    DrawRectangle(x * 10, y * 10, 10, 10, GREEN);
                 }
             }
         }
