@@ -1,4 +1,6 @@
 ﻿using AdventOfCode.vis;
+using System.ComponentModel;
+using System.Linq;
 
 namespace AdventOfCode;
 
@@ -28,6 +30,7 @@ public class Day09 : BaseDay
     public override ValueTask<string> Solve_2()
     {
         _visualiser.StartVisualiser(solve2);
+        //solve2();
         return new(_partTwo);
     }
 
@@ -39,18 +42,14 @@ public class Day09 : BaseDay
     private int getVisited(int vKnot)
     {
         (int X, int Y)[] rope = new (int, int)[10];
-        for (int i = 0; i < rope.Length; i++)
-        {
-            rope[i] = (0, 0);
-        }
+        for (int i = 0; i < rope.Length; i++) rope[i] = (0, 0);        
 
-        HashSet<(int, int)> visited = new HashSet<(int, int)>();
-        visited.Add((0,0));
+        HashSet<(int, int)> visited = new() { (0,0) };        
 
         foreach (string line in _input)
         {
             char c = line[0];
-            int v = int.Parse(line.Split(' ')[1]);
+            int v = int.Parse(line[2..]);
             switch (c)
             {
                 case 'U':
@@ -65,7 +64,7 @@ public class Day09 : BaseDay
                 case 'R':
                     move(v, 1, 0, ref rope, visited, vKnot);
                     break;
-            }
+            }           
         }
 
         return visited.Count();
@@ -77,24 +76,27 @@ public class Day09 : BaseDay
         {
             rope[0].X += x;
             rope[0].Y += y;
-            moveRope(ref rope, visited, vIdx);
+            moveRope(ref rope);
+
+            (int, int) vis = (rope[vIdx].X, rope[vIdx].Y);
+            if (!visited.Contains(vis)) visited.Add(vis);
+
+            // visualisation
+            (int, int)[] renderRope = new (int, int)[10];
+            rope.CopyTo(renderRope, 0);
+            _visualiser.AddRenderItem(new Day09Vis.RenderItem(0, renderRope));
         }
     }
 
-    private void moveRope(ref (int X, int Y)[] rPos, HashSet<(int, int)> visited, int vIdx)
+    private void moveRope(ref (int X, int Y)[] rope)
     {
-        for (int i = 1; i < rPos.Length; i++)
+        for (int i = 1; i < rope.Length; i++)
         {
-            moveKnot(rPos[i - 1], ref rPos[i], visited, i == vIdx);
+            moveKnot(rope[i - 1], ref rope[i]);
         }
-
-        // visualisation
-        (int, int)[] rope = new (int, int)[10]; 
-        rPos.CopyTo(rope,0);
-        _visualiser.AddRenderItem(new Day09Vis.RenderItem(0, rope));
     }
 
-    private static void moveKnot((int X, int Y) hPos, ref (int X, int Y) tPos, HashSet<(int, int)> visited, bool isTrackedKnot)
+    private static void moveKnot((int X, int Y) hPos, ref (int X, int Y) tPos)
     {
         int xDiff = hPos.X - tPos.X;
         int yDiff = hPos.Y - tPos.Y;
@@ -104,11 +106,6 @@ public class Day09 : BaseDay
             int y = AoCHelper.Clamp(yDiff, -1, 1);
             tPos.X += x;
             tPos.Y += y;
-            if (isTrackedKnot)
-            {
-                (int, int) v = (tPos.X, tPos.Y);
-                if (!visited.Contains(v)) visited.Add(v);                
-            }
         }
     }
 }
