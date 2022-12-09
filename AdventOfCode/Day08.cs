@@ -83,7 +83,7 @@ public class Day08 : BaseDay
             {
                 if (visible[x, y])
                 {
-                    _visualiser.AddRenderItem(new RenderItem(0, x, y));
+                    _visualiser.AddRenderItem(new Day08Vis.RenderItem(0, x, y));
                     visC++;                    
                 }
             }
