@@ -13,8 +13,11 @@ namespace AdventOfCode.vis
         private static readonly int WINDOW_Y = 1080;
         private static readonly int MAX_PER_FRAME = 1; 
         private static readonly int FPS = 30;
+        private static readonly bool FOLLOW_HEAD = false;
+
         private Viewer _renderer = new Viewer(WINDOW_X, WINDOW_Y, FPS, "Day09");
         private ConcurrentQueue<RenderItem> _renderQueue = new ConcurrentQueue<RenderItem>();
+        private bool _isRendering = false;
         
         private Rectangle[] _recs = new Rectangle[10];
         HashSet<(int,int)> _visited = new HashSet<(int, int)>();
@@ -34,28 +37,32 @@ namespace AdventOfCode.vis
 
         internal void StartVisualiser(Action solver)
         {
+            _isRendering = true;
             Task.Run(() => solver());
             _renderer.StartViewer(processFrame);
         }
 
         internal void AddRenderItem(RenderItem item)
         {
-            _renderQueue.Enqueue(item);
+            if (_isRendering) _renderQueue.Enqueue(item);
         }
 
         internal void processFrame()
         {
             processQueue();
+            int offsetX = FOLLOW_HEAD?(int)_recs[0].x * 10 : 0;
+            int offsetY = FOLLOW_HEAD?(int)_recs[0].y * 10 : 0;           
+
             foreach (Rectangle r in _vRecs)
             {
-                int x = (int)r.x * 10 + WINDOW_X / 2;
-                int y = (int)r.y * 10 + WINDOW_Y / 2;
+                int x = (int)r.x * 10 + WINDOW_X / 2 - offsetX;
+                int y = (int)r.y * 10 + WINDOW_Y / 2 - offsetY;
                 DrawRectangle(x, y, (int)r.width, (int)r.height, ORANGE);
             }
             for (int i = 9; i >= 0; i--)
             {
-                int x = (int)_recs[i].x * 10 + WINDOW_X / 2;
-                int y = (int)_recs[i].y * 10 + WINDOW_Y / 2;
+                int x = (int)_recs[i].x * 10 + WINDOW_X / 2 - offsetX;
+                int y = (int)_recs[i].y * 10 + WINDOW_Y / 2 - offsetY;
                 DrawRectangle(x, y, (int)_recs[i].width, (int)_recs[i].height, WHITE);
                 DrawText(i.ToString(), x + 2, y, 10, BLACK);
             }            
