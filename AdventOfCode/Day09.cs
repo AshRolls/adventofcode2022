@@ -1,4 +1,5 @@
 ﻿using AdventOfCode.vis;
+using System.ComponentModel;
 using System.Linq;
 
 namespace AdventOfCode;
@@ -29,6 +30,7 @@ public class Day09 : BaseDay
     public override ValueTask<string> Solve_2()
     {
         _visualiser.StartVisualiser(solve2);
+        //solve2();
         return new(_partTwo);
     }
 
@@ -40,13 +42,9 @@ public class Day09 : BaseDay
     private int getVisited(int vKnot)
     {
         (int X, int Y)[] rope = new (int, int)[10];
-        for (int i = 0; i < rope.Length; i++)
-        {
-            rope[i] = (0, 0);
-        }
+        for (int i = 0; i < rope.Length; i++) rope[i] = (0, 0);        
 
-        HashSet<(int, int)> visited = new HashSet<(int, int)>();
-        visited.Add((0,0));
+        HashSet<(int, int)> visited = new() { (0,0) };        
 
         foreach (string line in _input)
         {
@@ -55,33 +53,33 @@ public class Day09 : BaseDay
             switch (c)
             {
                 case 'U':
-                    move(v, 0, 1, ref rope);
+                    move(v, 0, 1, ref rope, visited, vKnot);
                     break;
                 case 'D':
-                    move(v, 0, -1, ref rope);
+                    move(v, 0, -1, ref rope, visited, vKnot);
                     break;
                 case 'L':
-                    move(v, -1, 0, ref rope);
+                    move(v, -1, 0, ref rope, visited, vKnot);
                     break;
                 case 'R':
-                    move(v, 1, 0, ref rope);
+                    move(v, 1, 0, ref rope, visited, vKnot);
                     break;
-            }
-
-            (int, int) vis = (rope[vKnot].X, rope[vKnot].Y);
-            if (!visited.Contains(vis)) visited.Add(vis);
+            }           
         }
 
         return visited.Count();
     }
 
-    private void move(int v, int x, int y, ref (int X, int Y)[] rope)
+    private void move(int v, int x, int y, ref (int X, int Y)[] rope, HashSet<(int, int)> visited, int vIdx)
     {
         for (int i = 0; i < v; i++)
         {
             rope[0].X += x;
             rope[0].Y += y;
             moveRope(ref rope);
+
+            (int, int) vis = (rope[vIdx].X, rope[vIdx].Y);
+            if (!visited.Contains(vis)) visited.Add(vis);
 
             // visualisation
             (int, int)[] renderRope = new (int, int)[10];
