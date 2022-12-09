@@ -3,6 +3,7 @@ using static Raylib_cs.Raylib;
 using static Raylib_cs.Color;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Reflection;
 
 namespace AdventOfCode.vis
 {
@@ -16,19 +17,19 @@ namespace AdventOfCode.vis
         private ConcurrentQueue<RenderItem> _renderQueue = new ConcurrentQueue<RenderItem>();
         
         private Rectangle[] _recs = new Rectangle[10];
-        Dictionary<Tuple<int, int>, bool> _visited = new Dictionary<Tuple<int, int>, bool>();
+        HashSet<(int,int)> _visited = new HashSet<(int, int)>();
         private List<Rectangle> _vRecs = new List<Rectangle>();
 
         internal class RenderItem
         {
-            internal RenderItem(byte type, Tuple<int, int>[] rope)
+            internal RenderItem(byte type, (int, int)[] rope)
             {
                 Type = type;
                 Rope = rope;
             }
 
             internal byte Type { get; private set; }
-            internal Tuple<int, int>[] Rope { get; private set; }
+            internal (int, int)[] Rope { get; private set; }
         }
 
         internal void StartVisualiser(Action solver)
@@ -79,7 +80,7 @@ namespace AdventOfCode.vis
             }
         }
 
-        private void addRope(Tuple<int, int>[] rope)
+        private void addRope((int, int)[] rope)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -91,10 +92,11 @@ namespace AdventOfCode.vis
             }            
         }
 
-        private void addVisited(Tuple<int, int> tail)
+        private void addVisited((int, int) tail)
         {
-            if (_visited.TryAdd(tail, true))
+            if (!_visited.Contains(tail))
             {
+                _visited.Add(tail); 
                 Rectangle r = new Rectangle(tail.Item1,tail.Item2,10,10);
                 _vRecs.Add(r);
             }

@@ -44,8 +44,8 @@ public class Day09 : BaseDay
             rPos[i] = new Pos() { X = 0, Y = 0 };
         }
 
-        Dictionary<Tuple<int, int>, bool> visited = new Dictionary<Tuple<int, int>, bool>();
-        visited.Add(new Tuple<int, int>(0, 0), true);
+        HashSet<(int, int)> visited = new HashSet<(int, int)>();
+        visited.Add((0,0));
 
         foreach (string line in _input)
         {
@@ -77,7 +77,7 @@ public class Day09 : BaseDay
         public int Y;
     }
 
-    private void move(int v, int x, int y, ref Pos[] rPos, Dictionary<Tuple<int, int>, bool> visited, int vIdx)
+    private void move(int v, int x, int y, ref Pos[] rPos, HashSet<(int, int)> visited, int vIdx)
     {
         for (int i = 0; i < v; i++)
         {
@@ -87,21 +87,21 @@ public class Day09 : BaseDay
         }
     }
 
-    private void moveRope(ref Pos[] rPos, Dictionary<Tuple<int, int>, bool> visited, int vIdx)
+    private void moveRope(ref Pos[] rPos, HashSet<(int, int)> visited, int vIdx)
     {
-        Tuple<int, int>[] rope = new Tuple<int, int>[10];
-        rope[0] = new Tuple<int, int>(rPos[0].X, rPos[0].Y);
+        (int, int)[] rope = new (int, int)[10];
+        rope[0] = (rPos[0].X, rPos[0].Y);
 
         for (int i = 1; i < rPos.Length; i++)
         {
             moveKnot(rPos[i - 1], ref rPos[i], visited, i == vIdx);
-            rope[i] = new Tuple<int, int>(rPos[i].X, rPos[i].Y);
+            rope[i] = (rPos[i].X, rPos[i].Y);
         }
 
         _visualiser.AddRenderItem(new Day09Vis.RenderItem(0, rope));
     }
 
-    private void moveKnot(Pos hPos, ref Pos tPos, Dictionary<Tuple<int, int>, bool> visited, bool isTrack)
+    private static void moveKnot(Pos hPos, ref Pos tPos, HashSet<(int, int)> visited, bool isTrack)
     {
         int xDiff = hPos.X - tPos.X;
         int yDiff = hPos.Y - tPos.Y;
@@ -111,7 +111,11 @@ public class Day09 : BaseDay
             int y = AoCHelper.Clamp(yDiff, -1, 1);
             tPos.X += x;
             tPos.Y += y;
-            if (isTrack) visited.TryAdd(new Tuple<int, int>(tPos.X, tPos.Y), true);
+            if (isTrack)
+            {
+                (int, int) v = (tPos.X, tPos.Y);
+                if (!visited.Contains(v)) visited.Add(v);                
+            }
         }
     }
 }
