@@ -1,18 +1,13 @@
 ﻿using AdventOfCode.vis;
-using Raylib_cs;
-using static Raylib_cs.Raylib;
-using static Raylib_cs.Color;
-using System.Collections.Concurrent;
 
 namespace AdventOfCode;
 
 public class Day08 : BaseDay
 {
-    private readonly string[] _input;        
-    private Day08Vis visualiser = new Day08Vis();
-
-    private string partOne;
-    private string partTwo;
+    private readonly string[] _input;
+    private string _partOne;
+    private string _partTwo;
+    private Day08Vis _visualiser = new Day08Vis();   
 
     public Day08()
     {
@@ -21,14 +16,14 @@ public class Day08 : BaseDay
    
     public override ValueTask<string> Solve_1()
     {
-        visualiser.StartVisualiser(solve1);   
-        return new(partOne);
+        _visualiser.StartVisualiser(solve1);   
+        return new(_partOne);
     }
 
     public override ValueTask<string> Solve_2()
     {
         solve2();
-        return new(partTwo);
+        return new(_partTwo);
     }
 
     private void solve1()
@@ -45,7 +40,7 @@ public class Day08 : BaseDay
             }
         }
 
-        partOne = getVisibleCount(visible).ToString();        
+        _partOne = getVisibleCount(visible).ToString();        
     }
 
     private void solve2()
@@ -63,7 +58,7 @@ public class Day08 : BaseDay
             }
         }
 
-        partTwo = getHighestScenic(scenic).ToString();        
+        _partTwo = getHighestScenic(scenic).ToString();        
     }
 
     private int getHighestScenic(int[,] scenic)
@@ -88,7 +83,7 @@ public class Day08 : BaseDay
             {
                 if (visible[x, y])
                 {
-                    visualiser.AddRenderItem(new RenderItem(0, x, y));
+                    _visualiser.AddRenderItem(new Day08Vis.RenderItem(0, x, y));
                     visC++;                    
                 }
             }

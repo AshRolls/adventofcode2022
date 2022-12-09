@@ -12,6 +12,20 @@ namespace AdventOfCode.vis
         private readonly int MAX_PER_FRAME = 30;        
         private Rectangle[,] _recs = new Rectangle[99, 99];
 
+        internal class RenderItem
+        {
+            internal RenderItem(byte type, int x, int y)
+            {
+                Type = type;
+                X = x;
+                Y = y;
+            }
+
+            internal byte Type { get; private set; }
+            internal int X { get; private set; }
+            internal int Y { get; private set; }
+        }
+
         internal void StartVisualiser(Action solver)
         {
             Task.Run(() => solver());
