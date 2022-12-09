@@ -21,34 +21,8 @@ public class Day09 : BaseDay
     }
 
     private void solve1()
-    {
-        Pos hPos = new Pos() { X = 0, Y = 0 };
-        Pos tPos = new Pos() { X = 0, Y = 0 }; 
-        Dictionary<Tuple<int,int>,bool> visited = new Dictionary<Tuple<int, int>, bool>();
-        visited.Add(new Tuple<int, int>(tPos.X,tPos.Y), true);
-
-        foreach (string line in _input)
-        {
-            char c = line[0];
-            int v = int.Parse(line.Split(' ')[1]);
-            switch (c)
-            {
-                case 'U':
-                    move(v, 0, 1, ref hPos, ref tPos, visited);
-                    break;
-                case 'D':
-                    move(v, 0, -1, ref hPos, ref tPos, visited);
-                    break;
-                case 'L':
-                    move(v, -1, 0, ref hPos, ref tPos, visited);
-                    break;
-                case 'R':
-                    move(v, 1, 0, ref hPos, ref tPos, visited);
-                    break;
-            }
-        }
-
-        _partOne = visited.Count().ToString();
+    {        
+        _partOne = getVisited(1).ToString();
     }
 
     public override ValueTask<string> Solve_2()
@@ -58,6 +32,11 @@ public class Day09 : BaseDay
     }
 
     private void solve2()
+    {
+        _partTwo = getVisited(9).ToString();
+    }
+
+    private int getVisited(int vKnot)
     {
         Pos[] rPos = new Pos[10];
         for (int i = 0; i < rPos.Length; i++)
@@ -75,22 +54,22 @@ public class Day09 : BaseDay
             switch (c)
             {
                 case 'U':
-                    move(v, 0, 1, ref rPos, visited);
+                    move(v, 0, 1, ref rPos, visited, vKnot);
                     break;
                 case 'D':
-                    move(v, 0, -1, ref rPos, visited);
+                    move(v, 0, -1, ref rPos, visited, vKnot);
                     break;
                 case 'L':
-                    move(v, -1, 0, ref rPos, visited);
+                    move(v, -1, 0, ref rPos, visited, vKnot);
                     break;
                 case 'R':
-                    move(v, 1, 0, ref rPos, visited);
+                    move(v, 1, 0, ref rPos, visited, vKnot);
                     break;
             }
         }
 
-        _partTwo = visited.Count().ToString();
-    }    
+        return visited.Count();
+    }
 
     private struct Pos
     {
@@ -98,27 +77,31 @@ public class Day09 : BaseDay
         public int Y;
     }
 
-    private void move(int v, int x, int y, ref Pos hPos, ref Pos tPos, Dictionary<Tuple<int, int>, bool> visited)
-    {        
-        for (int i = 0; i < v; i++)
-        {
-            hPos.X += x;
-            hPos.Y += y;
-            moveKnot(hPos, ref tPos, visited);
-        }
-    }
-
-    private void move(int v, int x, int y, ref Pos[] rPos, Dictionary<Tuple<int, int>, bool> visited)
+    private void move(int v, int x, int y, ref Pos[] rPos, Dictionary<Tuple<int, int>, bool> visited, int vIdx)
     {
         for (int i = 0; i < v; i++)
         {
             rPos[0].X += x;
             rPos[0].Y += y;
-            moveRope(ref rPos, visited);
+            moveRope(ref rPos, visited, vIdx);
         }
     }
 
-    private void moveKnot(Pos hPos, ref Pos tPos, Dictionary<Tuple<int, int>, bool> visited, bool isTail = true)
+    private void moveRope(ref Pos[] rPos, Dictionary<Tuple<int, int>, bool> visited, int vIdx)
+    {
+        Tuple<int, int>[] rope = new Tuple<int, int>[10];
+        rope[0] = new Tuple<int, int>(rPos[0].X, rPos[0].Y);
+
+        for (int i = 1; i < rPos.Length; i++)
+        {
+            moveKnot(rPos[i - 1], ref rPos[i], visited, i == vIdx);
+            rope[i] = new Tuple<int, int>(rPos[i].X, rPos[i].Y);
+        }
+
+        _visualiser.AddRenderItem(new Day09Vis.RenderItem(0, rope));
+    }
+
+    private void moveKnot(Pos hPos, ref Pos tPos, Dictionary<Tuple<int, int>, bool> visited, bool isTrack)
     {
         int xDiff = hPos.X - tPos.X;
         int yDiff = hPos.Y - tPos.Y;
@@ -128,21 +111,7 @@ public class Day09 : BaseDay
             int y = AoCHelper.Clamp(yDiff, -1, 1);
             tPos.X += x;
             tPos.Y += y;
-            if (isTail) visited.TryAdd(new Tuple<int, int>(tPos.X, tPos.Y), true);
+            if (isTrack) visited.TryAdd(new Tuple<int, int>(tPos.X, tPos.Y), true);
         }
-    }
-
-    private void moveRope(ref Pos[] rPos, Dictionary<Tuple<int, int>, bool> visited)
-    {
-        Tuple<int, int>[] rope = new Tuple<int, int>[10];
-        rope[0] = new Tuple<int, int>(rPos[0].X, rPos[0].Y);
-        
-        for (int i = 1; i < rPos.Length; i++)
-        {            
-            moveKnot(rPos[i-1], ref rPos[i], visited, i == 9);
-            rope[i] = new Tuple<int, int>(rPos[i].X, rPos[i].Y);
-        }
-
-        _visualiser.AddRenderItem(new Day09Vis.RenderItem(0, rope));
     }
 }
