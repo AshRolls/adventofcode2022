@@ -38,10 +38,10 @@ public class Day09 : BaseDay
 
     private int getVisited(int vKnot)
     {
-        Pos[] rPos = new Pos[10];
-        for (int i = 0; i < rPos.Length; i++)
+        (int X, int Y)[] rope = new (int, int)[10];
+        for (int i = 0; i < rope.Length; i++)
         {
-            rPos[i] = new Pos() { X = 0, Y = 0 };
+            rope[i] = (0, 0);
         }
 
         HashSet<(int, int)> visited = new HashSet<(int, int)>();
@@ -54,16 +54,16 @@ public class Day09 : BaseDay
             switch (c)
             {
                 case 'U':
-                    move(v, 0, 1, ref rPos, visited, vKnot);
+                    move(v, 0, 1, ref rope, visited, vKnot);
                     break;
                 case 'D':
-                    move(v, 0, -1, ref rPos, visited, vKnot);
+                    move(v, 0, -1, ref rope, visited, vKnot);
                     break;
                 case 'L':
-                    move(v, -1, 0, ref rPos, visited, vKnot);
+                    move(v, -1, 0, ref rope, visited, vKnot);
                     break;
                 case 'R':
-                    move(v, 1, 0, ref rPos, visited, vKnot);
+                    move(v, 1, 0, ref rope, visited, vKnot);
                     break;
             }
         }
@@ -71,37 +71,30 @@ public class Day09 : BaseDay
         return visited.Count();
     }
 
-    private struct Pos
-    {
-        public int X;
-        public int Y;
-    }
-
-    private void move(int v, int x, int y, ref Pos[] rPos, HashSet<(int, int)> visited, int vIdx)
+    private void move(int v, int x, int y, ref (int X, int Y)[] rope, HashSet<(int, int)> visited, int vIdx)
     {
         for (int i = 0; i < v; i++)
         {
-            rPos[0].X += x;
-            rPos[0].Y += y;
-            moveRope(ref rPos, visited, vIdx);
+            rope[0].X += x;
+            rope[0].Y += y;
+            moveRope(ref rope, visited, vIdx);
         }
     }
 
-    private void moveRope(ref Pos[] rPos, HashSet<(int, int)> visited, int vIdx)
+    private void moveRope(ref (int X, int Y)[] rPos, HashSet<(int, int)> visited, int vIdx)
     {
-        (int, int)[] rope = new (int, int)[10];
-        rope[0] = (rPos[0].X, rPos[0].Y);
-
         for (int i = 1; i < rPos.Length; i++)
         {
             moveKnot(rPos[i - 1], ref rPos[i], visited, i == vIdx);
-            rope[i] = (rPos[i].X, rPos[i].Y);
         }
 
+        // visualisation
+        (int, int)[] rope = new (int, int)[10]; 
+        rPos.CopyTo(rope,0);
         _visualiser.AddRenderItem(new Day09Vis.RenderItem(0, rope));
     }
 
-    private static void moveKnot(Pos hPos, ref Pos tPos, HashSet<(int, int)> visited, bool isTrack)
+    private static void moveKnot((int X, int Y) hPos, ref (int X, int Y) tPos, HashSet<(int, int)> visited, bool isTrackedKnot)
     {
         int xDiff = hPos.X - tPos.X;
         int yDiff = hPos.Y - tPos.Y;
@@ -111,7 +104,7 @@ public class Day09 : BaseDay
             int y = AoCHelper.Clamp(yDiff, -1, 1);
             tPos.X += x;
             tPos.Y += y;
-            if (isTrack)
+            if (isTrackedKnot)
             {
                 (int, int) v = (tPos.X, tPos.Y);
                 if (!visited.Contains(v)) visited.Add(v);                
