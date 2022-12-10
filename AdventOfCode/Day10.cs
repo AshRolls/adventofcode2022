@@ -1,4 +1,6 @@
-﻿namespace AdventOfCode;
+﻿using System.Text;
+
+namespace AdventOfCode;
 
 public class Day10 : BaseDay
 {
@@ -53,25 +55,21 @@ public class Day10 : BaseDay
 
     private void solve2()
     {
-        int c = 1;
+        int c = 0;
         int x = 1;
         int i = 0;
         bool adding = false;
-        string screen = String.Empty;
+        StringBuilder s = new StringBuilder();
+        const int ROW = 40;
 
         while(true)
         {
             if (i >= _input.Length) break;
+            c++;
 
-            if (c%40 - x - 1 <= 1 && c%40 - x - 1>= -1)
-            {
-                screen += '\u2588';
-            }
-            else
-            {
-                screen += ' ';
-            }
-
+            if ((c - 1) % ROW - x <= 1 && (c - 1) % ROW - x >= -1) s.Append('\u2588');
+            else s.Append(' ');
+          
             if (_input[i][0] == 'n') i++;
             else if (adding)
             {
@@ -79,18 +77,17 @@ public class Day10 : BaseDay
                 adding = false;
                 i++;
             }
-            else adding = true;
-            c++;
+            else adding = true;            
         }
 
+        String screen = s.ToString();
+        Console.WriteLine(screen.Substring(0, ROW));
+        Console.WriteLine(screen.Substring(40, ROW));
+        Console.WriteLine(screen.Substring(80, ROW));
+        Console.WriteLine(screen.Substring(120, ROW));
+        Console.WriteLine(screen.Substring(160, ROW));
+        Console.WriteLine(screen.Substring(200, ROW));
 
-        Console.WriteLine(screen.Substring(0, 40));
-        Console.WriteLine(screen.Substring(40, 40));
-        Console.WriteLine(screen.Substring(80, 40));
-        Console.WriteLine(screen.Substring(120, 40));
-        Console.WriteLine(screen.Substring(160, 40));
-        Console.WriteLine(screen.Substring(200, 40));
-
-        _partTwo = "Not Solved";
+        _partTwo = "Console";
     }
 }
