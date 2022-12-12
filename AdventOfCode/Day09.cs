@@ -1,6 +1,4 @@
 ﻿using AdventOfCode.vis;
-using System.ComponentModel;
-using System.Linq;
 
 namespace AdventOfCode;
 
@@ -79,7 +77,7 @@ public class Day09 : BaseDay
             moveRope(ref rope);
 
             (int, int) vis = (rope[vIdx].X, rope[vIdx].Y);
-            if (!visited.Contains(vis)) visited.Add(vis);
+            _ = visited.Add(vis);
 
             // visualisation
             (int, int)[] renderRope = new (int, int)[10];

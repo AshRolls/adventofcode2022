@@ -24,7 +24,7 @@ public class DayXX : BaseDay
 
     public override ValueTask<string> Solve_2()
     {
-        solve2()
+        solve2();
         return new(_partTwo);
     }
 

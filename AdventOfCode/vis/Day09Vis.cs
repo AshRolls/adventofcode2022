@@ -101,10 +101,9 @@ namespace AdventOfCode.vis
 
         private void addVisited((int, int) tail)
         {
-            if (!_visited.Contains(tail))
+            if (_visited.Add(tail))
             {
-                _visited.Add(tail); 
-                Rectangle r = new Rectangle(tail.Item1,tail.Item2,10,10);
+                Rectangle r = new Rectangle(tail.Item1, tail.Item2, 10, 10);
                 _vRecs.Add(r);
             }
             
