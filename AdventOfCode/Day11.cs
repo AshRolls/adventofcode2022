@@ -1,6 +1,7 @@
 ﻿using Spectre.Console;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace AdventOfCode;
 
@@ -45,7 +46,20 @@ public class Day11 : BaseDay
 
     private void solve2()
     {
-        _partTwo = "Not Solved";
+        Monkey[] monkeys = parseInput();
+
+        Console.Out.WriteLine("starting");
+        for (int i = 0; i < 10000; i++)
+        {
+            Console.Out.Write(i.ToString() + " ");
+            performRound(monkeys, false);
+        }
+
+        var insp = monkeys.Select(x => x._inspected).ToList();
+        insp.Sort();
+        insp.Reverse();
+
+        _partTwo = (insp[0] * insp[1]).ToString();
     }
 
     private Monkey[] parseInput()
@@ -62,18 +76,30 @@ public class Day11 : BaseDay
         return monkeys;
     }
 
-    private void performRound(Monkey[] monkeys)
+    static int sModM(string s, int mod)
     {
-        Debug.Assert(20 / 11 == 1);
+        int number = 0;
+        for (int i = 0; i < s.Length; i++)
+        {
+            number *= 10;
+            int x = int.Parse(s[i].ToString());
+            number += x;
+            number %= mod;
+        }
+        return number;
+    }
+
+    private void performRound(Monkey[] monkeys, bool worry = true)
+    {
         for (int i = 0; i < 8; i++)
         {
             Monkey m = monkeys[i];
             while (m._items.Any())
             {
                 m._inspected++;
-                int item = m._items.Dequeue();
+                BigInteger item = m._items.Dequeue();
                 item = m.Operation(item, m._opVal);
-                item = item / 3; // should Math.Floor automatically as all ints
+                if (worry) item = item / 3; // Math.Floor automatically as all ints
                 if (m.Test(item)) m._trueMonkey._items.Enqueue(item);
                 else m._falseMonkey._items.Enqueue(item);
             }
@@ -125,14 +151,14 @@ public class Day11 : BaseDay
 
     private class Monkey
     {
-        public Queue<int> _items = new Queue<int>();
-        public Func<int,int,int> Operation;
+        public Queue<BigInteger> _items = new Queue<BigInteger>();
+        public Func<BigInteger, int, BigInteger> Operation;
         public bool _opSelf = false;
         public int _opVal;
         public int _testVal;
         public Monkey _trueMonkey;
         public Monkey _falseMonkey;
-        public int _inspected;
+        public long _inspected;
 
         public Monkey(int operationVal, bool opSelf, int testVal)
         {
@@ -142,24 +168,24 @@ public class Day11 : BaseDay
             _inspected = 0;
         }
 
-        public bool Test(int val)
+        public bool Test(BigInteger val)
         {
             return (val % _testVal == 0);
         }
 
-        public static int OperationMult(int val, int op)
+        public static BigInteger OperationMult(BigInteger val, int op)
         {
-            return val *= op;
+            return BigInteger.Multiply(val, op);
         }
 
-        public static int OperationMultSelf(int val, int opUnused)
+        public static BigInteger OperationMultSelf(BigInteger val, int opUnused)
         {
-            return val *= val;
+            return BigInteger.Pow(val, 2);
         }
 
-        public static int OperationAdd(int val, int op)
+        public static BigInteger OperationAdd(BigInteger val, int op)
         {
-            return val += op;
+            return BigInteger.Add(val, op);
         }
     }
 }
