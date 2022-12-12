@@ -14,27 +14,31 @@ namespace AdventOfCode.vis
         private static readonly int HEIGHT = 40;
         private Rectangle[,] _pathRecs = new Rectangle[WIDTH, HEIGHT];
         private ColorRectangle[,] _heightRecs = new ColorRectangle[WIDTH, HEIGHT];
+        private Dictionary<int,Color> _greyColors = new Dictionary<int,Color>();
+        private string openNodes = string.Empty;
 
-        internal class ColorRectangle
+        internal struct ColorRectangle
         {
-            public Rectangle rec = new Rectangle();
-            public Color color;
+            public Rectangle rec;
+            public int v;
         }
         
-        internal class RenderItem
+        internal struct RenderItem
         {
-            internal RenderItem(byte type, int x, int y, int v = 0)
+            internal RenderItem(byte type, int x, int y, int v, string s)
             {
                 Type = type;
                 X = x;
                 Y = y;
                 V = v;
+                S = s;
             }
 
             internal byte Type { get; private set; }
             internal int X { get; private set; }
             internal int Y { get; private set; }
             internal int V { get; private set; }
+            internal string S { get; private set; }
         }
 
         internal void StartVisualiser(Action solver)
@@ -46,6 +50,11 @@ namespace AdventOfCode.vis
                     _heightRecs[x,y] = new ColorRectangle();
                 }
             }
+            for (int i = 0; i< 26; i++)
+            {
+                _greyColors.Add(i, new Color(i * 10, i * 10, i * 10, 255));
+            }
+
             Task.Run(() => solver());
             _renderer.StartViewer(processFrame);
         }
@@ -62,36 +71,37 @@ namespace AdventOfCode.vis
             {
                 for (int y = 0; y < HEIGHT; y++)
                 {
-                    DrawRectangle((int)_heightRecs[x, y].rec.x, (int)_heightRecs[x, y].rec.y, (int)_heightRecs[x, y].rec.width, (int)_heightRecs[x, y].rec.height, _heightRecs[x, y].color);
+                    DrawRectangle((int)_heightRecs[x, y].rec.x, (int)_heightRecs[x, y].rec.y, (int)_heightRecs[x, y].rec.width, (int)_heightRecs[x, y].rec.height, _greyColors[_heightRecs[x, y].v]);
                     DrawRectangle((int)_pathRecs[x, y].x, (int)_pathRecs[x, y].y, (int)_pathRecs[x, y].width, (int)_pathRecs[x, y].height, DARKGREEN);
+                    DrawText(openNodes, 10, 10, 20, WHITE);
                 }
             }
         }
 
+        private RenderItem _r;
         private void processQueue()
-        {
-            RenderItem r;
+        {            
             int thisFrame = 0;
-            while (_renderQueue.TryDequeue(out r))
+            while (_renderQueue.TryDequeue(out _r))
             {
-                if (r != null)
+                switch (_r.Type)
                 {
-                    switch (r.Type)
-                    {
-                        case 0:
-                            _pathRecs[r.X, r.Y].x = r.X * 10;
-                            _pathRecs[r.X, r.Y].y = r.Y * 10;
-                            _pathRecs[r.X, r.Y].width = 10;
-                            _pathRecs[r.X, r.Y].height = 10;
-                            break;
-                        case 1:
-                            _heightRecs[r.X, r.Y].rec.x = r.X * 10;
-                            _heightRecs[r.X, r.Y].rec.y = r.Y * 10;
-                            _heightRecs[r.X, r.Y].rec.width = 10;
-                            _heightRecs[r.X, r.Y].rec.height = 10;
-                            _heightRecs[r.X, r.Y].color = new Color(r.V * 10, r.V * 10, r.V * 10, 255);
-                            break;
-                    }
+                    case 0:
+                        _pathRecs[_r.X, _r.Y].x = _r.X * 10;
+                        _pathRecs[_r.X, _r.Y].y = _r.Y * 10;
+                        _pathRecs[_r.X, _r.Y].width = 10;
+                        _pathRecs[_r.X, _r.Y].height = 10;
+                        break;
+                    case 1:
+                        _heightRecs[_r.X, _r.Y].rec.x = _r.X * 10;
+                        _heightRecs[_r.X, _r.Y].rec.y = _r.Y * 10;
+                        _heightRecs[_r.X, _r.Y].rec.width = 10;
+                        _heightRecs[_r.X, _r.Y].rec.height = 10;
+                        _heightRecs[_r.X, _r.Y].v = _r.V;
+                        break;
+                    case 2:
+                        openNodes = _r.S;
+                        break;
                 }
                 if (thisFrame++ >= MAX_PER_FRAME) break;
             }
