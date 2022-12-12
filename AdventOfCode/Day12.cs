@@ -3,6 +3,7 @@
 using AdventOfCode.vis;
 using Priority_Queue;
 using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
 
 
 public class Day12 : BaseDay
@@ -188,6 +189,7 @@ public class Day12 : BaseDay
                     c = 'z';
                 }
                 grid[x, y] = (byte)((byte)c - asciiReduce);
+                _visualiser.AddRenderItem(new Day12Vis.RenderItem(1, x, y, grid[x, y]));
             }
         }
     }
