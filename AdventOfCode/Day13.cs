@@ -39,6 +39,7 @@ public class Day13 : BaseDay
             idx++;
             p.Compare();
             if (p.correctOrder) sum += idx;
+            //Console.Out.WriteLine(p.correctOrder);
         }
 
         _partOne = sum.ToString();
@@ -55,11 +56,13 @@ public class Day13 : BaseDay
             {
                 case '[':
                     Node n = new Node();
+                    n.parent = cur;
                     cur.children.Add(n);
                     cur = n;
                     break;
                 case ']':
                     addNodeValue(cur, v);
+                    cur = cur.parent;
                     break;
                 case ',':
                     addNodeValue(cur, v);
@@ -78,6 +81,7 @@ public class Day13 : BaseDay
         if (v.Length > 0)
         {
             Node n = new Node();
+            n.parent = cur;
             n.val = int.Parse(v.ToString());
             cur.children.Add(n);
             v.Clear();
@@ -150,14 +154,18 @@ public class Day13 : BaseDay
                 }
                 return state;
             }
+
             return CompareState.next;
-        }        
+        }
+
+        
     }
 
     private class Node
     {
         public int? val;
         public List<Node> children = new List<Node>();
+        public Node parent;
         public bool IsVal => val != null;
         public bool Finished => idx >= children.Count();
         private int idx = 0;
