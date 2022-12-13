@@ -1,4 +1,5 @@
-﻿using System.Runtime.ExceptionServices;
+﻿using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using System.Text;
 
 namespace AdventOfCode;
@@ -31,19 +32,16 @@ public class Day13 : BaseDay
             pairs.Add(p);
         }
 
-        //foreach(Pair p in pairs)
-        //{
-        //    p.Compare();
-        //    Console.Out.WriteLine(p.rightOrder);
-        //}
+        int idx = 0;
+        int sum = 0;
+        foreach (Pair p in pairs)
+        {
+            idx++;
+            p.Compare();
+            if (p.correctOrder) sum += idx;
+        }
 
-        pairs.First().Compare();
-        Console.Out.WriteLine(pairs.First().rightOrder);
-
-        pairs.Skip(1).First().Compare();
-        Console.Out.WriteLine(pairs.Skip(1).First().rightOrder);
-
-        _partOne = "Not Solved";
+        _partOne = sum.ToString();
     }
 
     private Node parseLine(string line)
@@ -57,13 +55,11 @@ public class Day13 : BaseDay
             {
                 case '[':
                     Node n = new Node();
-                    n.parent = cur;
                     cur.children.Add(n);
                     cur = n;
                     break;
                 case ']':
                     addNodeValue(cur, v);
-                    cur = cur.parent;
                     break;
                 case ',':
                     addNodeValue(cur, v);
@@ -82,84 +78,98 @@ public class Day13 : BaseDay
         if (v.Length > 0)
         {
             Node n = new Node();
-            n.parent = cur;
             n.val = int.Parse(v.ToString());
-            cur.children.Add(n);            
+            cur.children.Add(n);
             v.Clear();
         }
     }
+
+    private enum CompareState { pass, fail, next };
 
     private class Pair
     {
         public Node first;
         public Node second;
-        public bool rightOrder;        
+        public bool correctOrder;
+        
 
         internal void Compare()
         {
             Node left = first;
             Node right = second;
 
-            rightOrder = left.Compare(right, 0);
+            CompareState state = CompareState.next;
+            while (state == CompareState.next)
+            {
+                state = Compare(left.Next(), right.Next());
+            }
+            if (state == CompareState.pass) correctOrder = true;
+            else correctOrder = false;
         }
+
+        private CompareState Compare(Node? left, Node? right)
+        {
+            if (left == null && right == null) return CompareState.next;
+            if (left == null) return CompareState.pass;
+            if (right == null) return CompareState.fail;
+
+            // both val
+            if (left.IsVal && right.IsVal)
+            {
+                if (left.val < right.val) return CompareState.pass;
+                if (left.val > right.val) return CompareState.fail;
+                if (left.val == right.val) return CompareState.next;
+            }
+            // both list
+            else if (!left.IsVal && !right.IsVal)
+            {
+                CompareState state = CompareState.next;
+                while (state == CompareState.next && ((!left.Finished || !right.Finished) && !(left.Finished && right.Finished)))
+                {
+                    state = Compare(left.Next(), right.Next());
+                }
+                return state;
+            }
+            // left list, right val
+            else if (!left.IsVal && right.IsVal)
+            {
+                CompareState state = CompareState.next;
+                while (state == CompareState.next)
+                {
+                    state = Compare(left.Next(), right);
+                }
+                return state;
+            }
+            // right list, left val
+            else if (!right.IsVal && left.IsVal)
+            {
+                CompareState state = CompareState.next;
+                while (state == CompareState.next)
+                {
+                    state = Compare(left, right.Next());
+                }
+                return state;
+            }
+            return CompareState.next;
+        }        
     }
 
     private class Node
     {
         public int? val;
         public List<Node> children = new List<Node>();
-        public Node parent;
+        public bool IsVal => val != null;
+        public bool Finished => idx >= children.Count();
+        private int idx = 0;
 
-        internal bool Compare(Node right, int i)
-        {
-            bool rightOrder = false;
-
-            // both values are integers
-            if (this.val != null && right.val != null)
-            {
-                if (this.val < right.val) 
-                    return true;
-                if (this.val > right.val) 
-                    return false;
-                if (this.val == right.val)
-                {
-                    i++;
-                    rightOrder = this.parent.Compare(right.parent, i);
-                }
-            }
-            // both are lists
-            else if (this.children.Any() && right.children.Any())
-            {
-                // both have enough children to compare
-                if (this.children.Count() > i && right.children.Count() > i)
-                {
-                    rightOrder = this.children[i].Compare(right.children[i], i);
-                }
-                // left runs out of items first
-                else if (this.children.Count() < right.children.Count())
-                {
-                    return true;
-                }
-                // right runs out of items first
-                else
-                {
-                    return false;
-                }                
-            }
-            // left is value, right is list
-            else if (this.val != null && right.children.Any())
-            {
-                rightOrder = this.Compare(right.children.First(), i);
-            }
-            // right is list, left is value
-            else if (this.children.Any() && right.val != null)
-            {
-                rightOrder = this.children.First().Compare(right, i);
-            }
-
-            return rightOrder;
+        public Node? Next()
+        {            
+            Debug.Assert (val == null);
+            if (idx <= children.Count() - 1) return children[idx++];
+            return null;            
         }
     }
+       
 
     public override ValueTask<string> Solve_2()
     {
