@@ -11,8 +11,8 @@ using System.Runtime.ConstrainedExecution;
 public class Day12 : BaseDay
 {
     private readonly string[] _input;
-    private string _partOne;
-    private string _partTwo;
+    private string _partOne = String.Empty;
+    private string _partTwo = String.Empty;
     private Day12Vis _visualiser = new Day12Vis();
     private static readonly int WIDTH = 64;
     private static readonly int HEIGHT = 40;
@@ -24,36 +24,42 @@ public class Day12 : BaseDay
 
     public override ValueTask<string> Solve_1()
     {
-        _visualiser.StartVisualiser(solve1);
+        _visualiser.StartVisualiser(solveBoth);
         return new(_partOne);
-    }
+    }    
 
-    public struct Pos
-    {
-        public Pos (int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-
-        public int X; 
-        public int Y;
-    }
-
-    private void solve1()
+    private void solveBoth()
     {
         Byte[,] heightGrid = new Byte[WIDTH, HEIGHT];
         Pos start = new Pos();
         Pos end = new Pos();
         parseInput(heightGrid, ref start, ref end);
-      
-        //int min = aStar(heightGrid, start, end);
-        int min = dijkstra(heightGrid, start, end);
 
-        _partOne = min.ToString();
+        (int, int) min = dijkstra(heightGrid, end, start);
+
+        _partOne = min.Item1.ToString();
+        _partTwo = min.Item2.ToString();
     }
 
-    private int dijkstra(Byte[,] heights, Pos start, Pos end)
+    public override ValueTask<string> Solve_2()
+    {
+        return new(_partTwo);
+    }
+
+
+    public struct Pos
+    {
+        public Pos(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public int X;
+        public int Y;
+    }
+
+    private (int,int) dijkstra(Byte[,] heights, Pos start, Pos end)
     {
         PriorityQueue<Node, int> openQueue = new PriorityQueue<Node, int>();
         HashSet<Node> visitedNodes = new HashSet<Node>();
@@ -73,13 +79,38 @@ public class Day12 : BaseDay
 
         Node cur = null;
         List<Node> successors;
-        while (openQueue.Count > 0)
-        {
-            _visualiser.AddRenderItem(new Day12Vis.RenderItem(2, 0, 0, 0, openQueue.Count.ToString()));
+        Stack<Node> pathEnd = new Stack<Node>();
+        Stack<Node> pathA = new Stack<Node>();
+        bool foundEnd = false;
+        bool foundA = false;
+        while (openQueue.Count > 0 && !(foundEnd && foundA))
+        {            
             cur = openQueue.Dequeue();            
 
+            _visualiser.AddRenderItem(new Day12Vis.RenderItem(2, 0, 0, 0, "Open: "+ openQueue.Count.ToString() + " g: " + cur.g.ToString()));
+            _visualiser.AddRenderItem(new Day12Vis.RenderItem(0, cur.position.X, cur.position.Y, 0, String.Empty));
+
             if (cur.position.Equals(end))
-                break;
+            {
+                foundEnd = true;
+                Node trace = cur;
+                while (trace != null)
+                {
+                    pathEnd.Push(trace);
+                    trace = trace.parent;
+                }
+            }
+
+            if (heights[cur.position.X,cur.position.Y] == 0 && !foundA)
+            {
+                foundA = true;
+                Node trace = cur;                
+                while (trace != null)
+                {
+                    pathA.Push(trace);
+                    trace = trace.parent;
+                }
+            }                
 
             successors = new List<Node>();
             addSuccessors(cur, successors, grid, heights);
@@ -94,7 +125,7 @@ public class Day12 : BaseDay
                     visitedNodes.Add(successor);
                     //_visualiser.AddRenderItem(new Day12Vis.RenderItem(0, cur.position.X, cur.position.Y, 0, String.Empty));
                 }
-                else if (successor.g > cur.g)
+                else if (successor.g > cur.g + 1)
                 {
                     successor.g = cur.g + 1;
                     successor.parent = cur;
@@ -102,94 +133,25 @@ public class Day12 : BaseDay
                 }
             }
         }
-
-        Stack<Node> path = new Stack<Node>();
-        while (cur != null)
-        {
-            path.Push(cur);            
-            cur = cur.parent;
-        }
-
-        int steps = path.Count() - 1;
+        
+        int stepsEnd = pathEnd.Count() - 1;
+        int stepsA = pathA.Count() - 1;
 
         // visualise
-        foreach (Node n in path)
-        {
-            _visualiser.AddRenderItem(new Day12Vis.RenderItem(0, n.position.X, n.position.Y, 0, String.Empty));
-        }
+        //foreach (Node n in pathA)
+        //{
+        //    _visualiser.AddRenderItem(new Day12Vis.RenderItem(0, n.position.X, n.position.Y, 0, String.Empty));
+        //}
 
-        return steps;
+        return (stepsEnd,stepsA);
     }
-
-    //private int aStar(Byte[,] heights, Pos start, Pos end)
-    //{
-    //    FastPriorityQueue<Node> openQueue = new FastPriorityQueue<Node>(64 * 40 * 10);
-    //    Node[,] grid = new Node[64, 40];
-    //    for (int x = 0; x < 64; x++)
-    //    {
-    //        for (int y = 0; y < 40; y++)
-    //        {
-    //            grid[x, y] = new Node(new Pos(x, y));
-    //        }
-    //    }
-        
-    //    Node startNode = grid[start.X, start.Y];        
-    //    startNode.g = 0;
-    //    startNode.h = Math.Abs(start.X - end.X) + Math.Abs(start.X - end.Y);
-    //    startNode.f = startNode.g + startNode.h;
-    //    openQueue.Enqueue(startNode, 0);
-
-    //    Node cur = null;
-
-    //    while (openQueue.Count > 0)
-    //    {
-    //        cur = openQueue.Dequeue();
-    //        cur.closed = true;
-
-    //        if (cur.position.Equals(end)) 
-    //            break;
-
-    //        List<Node> successors = new List<Node>();
-    //        addSuccessors(cur, successors, grid, heights);
-
-    //        foreach (Node successor in successors)
-    //        {
-    //            if (successor.Closed) continue;
-    //            if (!openQueue.Contains(successor))
-    //            {
-    //                successor.g = cur.g + 1;
-    //                successor.h = Math.Abs(successor.position.X - end.X) + Math.Abs(successor.position.Y - end.Y);
-    //                successor.f = successor.g + successor.h;
-    //                successor.parent = cur;
-    //                openQueue.Enqueue(successor, successor.f);
-    //            }
-    //            else if (cur.g + successor.h < successor.f)
-    //            {
-    //                successor.g = cur.g;
-    //                successor.f = successor.g + successor.h;
-    //                successor.parent = cur;
-    //            }
-                
-    //        }               
-    //    }
-
-    //    Stack<Node> path = new Stack<Node>();
-    //    while (cur != null)
-    //    {
-    //        path.Push(cur);
-    //        //_visualiser.AddRenderItem(new Day12Vis.RenderItem(0, cur.position.X, cur.position.Y));
-    //        cur = cur.parent;           
-    //    }
-
-    //    return path.Count();
-    //}
 
     private static void addSuccessors(Node cur, List<Node> successors, Node[,] grid, Byte[,] heights)
     {
         if (cur.position.Y > 0)
         {
             Pos upPos = new Pos(cur.position.X, cur.position.Y - 1);
-            if (heights[upPos.X, upPos.Y] - heights[cur.position.X, cur.position.Y] < 2)
+            if (heights[upPos.X, upPos.Y] - heights[cur.position.X, cur.position.Y] >= -1)
             {
                 Node up = grid[upPos.X, upPos.Y];                
                 successors.Add(up);
@@ -198,7 +160,7 @@ public class Day12 : BaseDay
         if (cur.position.Y < HEIGHT - 1)
         {
             Pos downPos = new Pos(cur.position.X, cur.position.Y + 1);
-            if (heights[downPos.X, downPos.Y] - heights[cur.position.X, cur.position.Y] < 2)
+            if (heights[downPos.X, downPos.Y] - heights[cur.position.X, cur.position.Y] >= -1)
             {
                 Node down = grid[downPos.X, downPos.Y];
                 successors.Add(down);
@@ -207,7 +169,7 @@ public class Day12 : BaseDay
         if (cur.position.X > 0)
         {
             Pos leftPos = new Pos(cur.position.X - 1, cur.position.Y);
-            if (heights[leftPos.X, leftPos.Y] - heights[cur.position.X, cur.position.Y] < 2)
+            if (heights[leftPos.X, leftPos.Y] - heights[cur.position.X, cur.position.Y] >= -1)
             {
                 Node left = grid[leftPos.X, leftPos.Y];
                 successors.Add(left);
@@ -216,7 +178,7 @@ public class Day12 : BaseDay
         if (cur.position.X < WIDTH - 1)
         {
             Pos rightPos = new Pos(cur.position.X + 1, cur.position.Y);
-            if (heights[rightPos.X, rightPos.Y] - heights[cur.position.X, cur.position.Y] < 2)
+            if (heights[rightPos.X, rightPos.Y] - heights[cur.position.X, cur.position.Y] >= -1)
             {
                 Node right = grid[rightPos.X, rightPos.Y];
                 successors.Add(right);
@@ -232,14 +194,10 @@ public class Day12 : BaseDay
         }
 
         public Pos position { get; private set; }
-        //public int f;
         public int g;
-        //public int h; // manhattan
-        //public bool closed;
         public Node parent;
     }
 
-    private enum NodeState { Untested, Open, Closed }
 
     private void parseInput(byte[,] grid, ref Pos start, ref Pos end)
     {
@@ -267,14 +225,4 @@ public class Day12 : BaseDay
         }
     }
 
-    public override ValueTask<string> Solve_2()
-    {
-        solve2();
-        return new(_partTwo);
-    }
-
-    private void solve2()
-    {
-        _partTwo = "Not Solved";
-    }
 }

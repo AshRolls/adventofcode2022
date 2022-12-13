@@ -15,6 +15,7 @@ namespace AdventOfCode.vis
         private Rectangle[,] _pathRecs = new Rectangle[WIDTH, HEIGHT];
         private ColorRectangle[,] _heightRecs = new ColorRectangle[WIDTH, HEIGHT];
         private Dictionary<int,Color> _greyColors = new Dictionary<int,Color>();
+        private Color _opaqueGreen;
         private string openNodes = string.Empty;
 
         internal struct ColorRectangle
@@ -54,6 +55,7 @@ namespace AdventOfCode.vis
             {
                 _greyColors.Add(i, new Color(i * 10, i * 10, i * 10, 255));
             }
+            _opaqueGreen = new Color(0, 90, 0, 110);
 
             Task.Run(() => solver());
             _renderer.StartViewer(processFrame);
@@ -72,7 +74,7 @@ namespace AdventOfCode.vis
                 for (int y = 0; y < HEIGHT; y++)
                 {
                     DrawRectangle((int)_heightRecs[x, y].rec.x, (int)_heightRecs[x, y].rec.y, (int)_heightRecs[x, y].rec.width, (int)_heightRecs[x, y].rec.height, _greyColors[_heightRecs[x, y].v]);
-                    DrawRectangle((int)_pathRecs[x, y].x, (int)_pathRecs[x, y].y, (int)_pathRecs[x, y].width, (int)_pathRecs[x, y].height, DARKGREEN);
+                    DrawRectangle((int)_pathRecs[x, y].x, (int)_pathRecs[x, y].y, (int)_pathRecs[x, y].width, (int)_pathRecs[x, y].height, _opaqueGreen);
                     DrawText(openNodes, 10, 10, 20, WHITE);
                 }
             }
