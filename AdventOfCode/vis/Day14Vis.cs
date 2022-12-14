@@ -9,10 +9,11 @@ namespace AdventOfCode.vis
     {
         private Viewer _renderer;
         private ConcurrentQueue<RenderItem> _renderQueue = new ConcurrentQueue<RenderItem>();
-        private static readonly int MAX_PER_FRAME = 60;
-        private int _width = 800;
-        private int _height = 164;
-        private int _cellSize = 3;
+        private static readonly int MAX_PER_FRAME = 30;
+        private static int _width = 600;       
+        private static int _height = 164;
+        private int _xOffset = _width / 2;
+        private static int _cellSize = 3;
         private Rectangle[,] _sandRecs;
         private Rectangle[,] _wallRecs;
         private string sandN = string.Empty;
@@ -67,25 +68,26 @@ namespace AdventOfCode.vis
             int thisFrame = 0;
             while (_renderQueue.TryDequeue(out _r))
             {
+                int X = _r.X - _xOffset;
                 switch (_r.Type)
                 {
                     case 0:
-                        _wallRecs[_r.X, _r.Y].x = _r.X * _cellSize;
-                        _wallRecs[_r.X, _r.Y].y = _r.Y * _cellSize;
-                        _wallRecs[_r.X, _r.Y].width = _cellSize;
-                        _wallRecs[_r.X, _r.Y].height = _cellSize;
+                        _wallRecs[X, _r.Y].x = X * _cellSize;
+                        _wallRecs[X, _r.Y].y = _r.Y * _cellSize;
+                        _wallRecs[X, _r.Y].width = _cellSize;
+                        _wallRecs[X, _r.Y].height = _cellSize;
                         break;
                     case 1:
-                        _sandRecs[_r.X, _r.Y].x = _r.X * _cellSize;
-                        _sandRecs[_r.X, _r.Y].y = _r.Y * _cellSize;
-                        _sandRecs[_r.X, _r.Y].width = _cellSize;
-                        _sandRecs[_r.X, _r.Y].height = _cellSize;
+                        _sandRecs[X, _r.Y].x = X * _cellSize;
+                        _sandRecs[X, _r.Y].y = _r.Y * _cellSize;
+                        _sandRecs[X, _r.Y].width = _cellSize;
+                        _sandRecs[X, _r.Y].height = _cellSize;
                         break;                    
                     case 2:
                         sandN = _r.S;
                         break;
                 }
-                if (thisFrame++ >= MAX_PER_FRAME) break;
+                if (_r.Type != 0 && thisFrame++ >= MAX_PER_FRAME) break;
             }
         }
     }
