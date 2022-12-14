@@ -16,39 +16,31 @@ public class Day14 : BaseDay
     }
 
     public override ValueTask<string> Solve_1()
-    {
-        _visualiser.StartVisualiser(solve1);
-        //solve1();
+    {        
+        solve1();
         return new(_partOne);
     }
 
     private void solve1()
     {
-        int xMax = int.MinValue;
-        int xMin = int.MaxValue;
         int yMax = int.MinValue;
         foreach (string line in _input)
         {
             var vals = AoCHelper.NumsFromStr(line);
             for (int i = 0; i < vals.Length; i++)
             {
-                if (i % 2 == 0)
-                {
-                    if (vals[i] > xMax) xMax = vals[i];
-                    if (vals[i] < xMin) xMin = vals[i];
-                }
-                else
-                {
+                if (i % 2 != 0)
+                { 
                     if (vals[i] > yMax) yMax = vals[i];
                 }
             }
         }
 
-        bool[,] grid = new bool[xMax - xMin + 2, yMax + 1];
-        parseGrid(grid,xMin);
+        bool[,] grid = new bool[1000, yMax + 2];
+        parseGrid(grid);
 
         int sandAdded = 0;
-        while(!addSand(grid, xMin, yMax))
+        while(!addSand(grid, yMax))
         {
             sandAdded++;
         }
@@ -56,15 +48,60 @@ public class Day14 : BaseDay
         _partOne = sandAdded.ToString();
     }
 
-    private bool addSand(bool[,] grid, int xMin, int yMax)
+    public override ValueTask<string> Solve_2()
     {
-        int x = 500 - xMin;
+        //_visualiser.StartVisualiser(solve2);
+        solve2();
+        return new(_partTwo);
+    }
+
+    private void solve2()
+    {
+        int width = 1000;
+        int yMax = int.MinValue;
+        foreach (string line in _input)
+        {
+            var vals = AoCHelper.NumsFromStr(line);
+            for (int i = 0; i < vals.Length; i++)
+            {
+                if (i % 2 != 0)
+                {
+                    if (vals[i] > yMax) yMax = vals[i];
+                }
+            }
+        }
+
+        bool[,] grid = new bool[width, yMax + 3];
+        parseGrid(grid);
+        addFloorToGrid(grid, width, yMax + 2);
+
+        int sandAdded = 0;
+        while (!addSand(grid, int.MaxValue))
+        {
+            sandAdded++;
+        }
+        sandAdded++;
+
+        _partTwo = sandAdded.ToString();
+    }
+
+    private void addFloorToGrid(bool[,] grid, int width, int floor)
+    {
+        for(int x = 0; x<width; x++)
+        {
+            grid[x,floor] = true;
+        }
+    }
+
+    private bool addSand(bool[,] grid, int yMax)
+    {
+        int x = 500;
         int y = 0;
         bool rest = false;
 
         while (!rest)
         {
-            if (y >= yMax) return true;
+            if (y >= yMax) return true;            
             else if (!grid[x, y + 1]) y++;
             else if (!grid[x - 1, y + 1]) { x--; y++; }
             else if (!grid[x + 1, y + 1]) { x++; y++; }
@@ -73,12 +110,13 @@ public class Day14 : BaseDay
                 grid[x, y] = true;
                 rest = true;
                 _visualiser.AddRenderItem(new Day14Vis.RenderItem(1, x, y, String.Empty));
+                if (x == 500 && y == 0) return true;                                
             }
         }
         return false;
     }
 
-    private void parseGrid(bool[,] grid, int xMin)
+    private void parseGrid(bool[,] grid)
     {       
         foreach (string line in _input)
         {
@@ -89,8 +127,8 @@ public class Day14 : BaseDay
             {
                 var l = AoCHelper.NumsFromStr(points[i - 1]);
                 var c = AoCHelper.NumsFromStr(points[i]);
-                lastPoint = (l[0] - xMin, l[1]);
-                curPoint = (c[0] - xMin, c[1]);
+                lastPoint = (l[0], l[1]);
+                curPoint = (c[0], c[1]);
 
                 // horizontal
                 if (lastPoint.x == curPoint.x)
@@ -134,16 +172,5 @@ public class Day14 : BaseDay
                 }
             }
         }
-    }
-
-    public override ValueTask<string> Solve_2()
-    {
-        solve2();
-        return new(_partTwo);
-    }
-
-    private void solve2()
-    {
-        _partTwo = "Not Solved";
     }
 }

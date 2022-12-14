@@ -9,10 +9,10 @@ namespace AdventOfCode.vis
     {
         private Viewer _renderer;
         private ConcurrentQueue<RenderItem> _renderQueue = new ConcurrentQueue<RenderItem>();
-        private static readonly int MAX_PER_FRAME = 30;
-        private int _width = 79;
-        private int _height = 162;
-        private int _cellSize = 5;
+        private static readonly int MAX_PER_FRAME = 60;
+        private int _width = 800;
+        private int _height = 164;
+        private int _cellSize = 3;
         private Rectangle[,] _sandRecs;
         private Rectangle[,] _wallRecs;
         private string sandN = string.Empty;
