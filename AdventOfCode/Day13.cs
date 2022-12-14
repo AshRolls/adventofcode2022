@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 using System.Text;
 
 namespace AdventOfCode;
@@ -23,23 +22,19 @@ public class Day13 : BaseDay
 
     private void solve1()
     {
-        List<Pair> pairs = new List<Pair>();
-        for (int i = 0; i < _input.Length; i+=3)
-        {
-            Pair p = new Pair();
-            p.first = parseLine(_input[i]);
-            p.second = parseLine(_input[i+1]);
-            pairs.Add(p);
-        }
+        List<(Packet first, Packet second)> pairs = new List<(Packet, Packet)>();
 
-        int idx = 0;
+        for (int i = 0; i < _input.Length; i+=3)
+        {            
+            Packet first = new Packet(parseLine(_input[i]));            
+            Packet second = new Packet(parseLine(_input[i+1]));                        
+            pairs.Add((first, second));
+        }
+       
         int sum = 0;
-        foreach (Pair p in pairs)
+        for (int i = 0; i<pairs.Count; i++)
         {
-            idx++;
-            p.Compare();
-            if (p.correctOrder) sum += idx;
-            //Console.Out.WriteLine(p.correctOrder);
+            if (pairs[i].first.CompareTo(pairs[i].second) > 0) sum += i + 1;
         }
 
         _partOne = sum.ToString();
@@ -90,17 +85,38 @@ public class Day13 : BaseDay
 
     private enum CompareState { pass, fail, next };
 
+    private class Packet : IComparable<Packet>
+    {
+        internal Node Root;
+        public Packet (Node root)
+        {
+            Root = root;
+        }
+        
+        public int CompareTo(Packet right)
+        {
+            Pair p = new Pair(this, right);
+            p.Compare();
+            return p.correctOrder ? 1 : -1;
+        }
+    }
+
     private class Pair
     {
-        public Node first;
-        public Node second;
-        public bool correctOrder;
-        
+        public Packet First;
+        public Packet Second;
+        public bool correctOrder;        
+
+        public Pair(Packet first, Packet second)
+        {
+            this.First = first;
+            this.Second = second;
+        }
 
         internal void Compare()
         {
-            Node left = first;
-            Node right = second;
+            Node left = First.Root;
+            Node right = Second.Root;
 
             CompareState state = CompareState.next;
             while (state == CompareState.next)
