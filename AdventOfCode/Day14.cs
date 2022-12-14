@@ -29,10 +29,7 @@ public class Day14 : BaseDay
             var vals = AoCHelper.NumsFromStr(line);
             for (int i = 0; i < vals.Length; i++)
             {
-                if (i % 2 != 0)
-                { 
-                    if (vals[i] > yMax) yMax = vals[i];
-                }
+                if (i % 2 != 0 && vals[i] > yMax) yMax = vals[i];                
             }
         }
 
@@ -41,9 +38,7 @@ public class Day14 : BaseDay
 
         int sandAdded = 0;
         while(!addSand(grid, yMax))
-        {
             sandAdded++;
-        }
 
         _partOne = sandAdded.ToString();
     }
@@ -62,13 +57,8 @@ public class Day14 : BaseDay
         foreach (string line in _input)
         {
             var vals = AoCHelper.NumsFromStr(line);
-            for (int i = 0; i < vals.Length; i++)
-            {
-                if (i % 2 != 0)
-                {
-                    if (vals[i] > yMax) yMax = vals[i];
-                }
-            }
+            for (int i = 0; i < vals.Length; i++) 
+                if (i % 2 != 0 && vals[i] > yMax) yMax = vals[i];                            
         }
 
         bool[,] grid = new bool[width, yMax + 3];
@@ -76,10 +66,8 @@ public class Day14 : BaseDay
         addFloorToGrid(grid, width, yMax + 2);
 
         int sandAdded = 0;
-        while (!addSand(grid, int.MaxValue))
-        {
+        while (!addSand(grid, int.MaxValue)) 
             sandAdded++;
-        }
         sandAdded++;
 
         _partTwo = sandAdded.ToString();
