@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Drawing.Printing;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace AdventOfCode;
@@ -21,29 +23,51 @@ public class Day13 : BaseDay
     }
 
     private void solve1()
-    {
-        List<(Packet first, Packet second)> pairs = new List<(Packet, Packet)>();
-
-        for (int i = 0; i < _input.Length; i+=3)
-        {            
-            Packet first = new Packet(parseLine(_input[i]));            
-            Packet second = new Packet(parseLine(_input[i+1]));                        
-            pairs.Add((first, second));
-        }
-       
+    {        
+        int idx = 0;
         int sum = 0;
-        for (int i = 0; i<pairs.Count; i++)
+        for (int i = 0; i < _input.Length; i+=3)
         {
-            if (pairs[i].first.CompareTo(pairs[i].second) > 0) sum += i + 1;
+            idx++;
+            Node first = parseLine(_input[i]);            
+            Node second = parseLine(_input[i+1]);
+            if (first.CompareTo(second) < 0) sum += idx;                        
+        }               
+        _partOne = sum.ToString();
+    }
+
+
+    public override ValueTask<string> Solve_2()
+    {
+        solve2();
+        return new(_partTwo);
+    }
+
+    private void solve2()
+    {
+        List<Node> allNodes = new List<Node>();
+        Node twoDiv = parseLine("[[2]]");
+        Node sixDiv = parseLine("[[6]]");                
+
+        for (int i = 0; i < _input.Length; i++)
+        {
+            if (_input[i].Length > 0)
+            {
+                allNodes.Add(parseLine(_input[i]));                
+            }
         }
 
-        _partOne = sum.ToString();
+        allNodes.Add(twoDiv);
+        allNodes.Add(sixDiv);
+        allNodes.Sort();
+
+        int key = (allNodes.IndexOf(twoDiv) + 1) * (allNodes.IndexOf(sixDiv) + 1);
+        _partTwo = key.ToString();
     }
 
     private Node parseLine(string line)
     {
-        Node b = new Node();
-        Node cur = b;
+        Node? cur = null;
         StringBuilder v = new StringBuilder();
         foreach(char c in line)
         {            
@@ -51,13 +75,16 @@ public class Day13 : BaseDay
             {
                 case '[':
                     Node n = new Node();
-                    n.parent = cur;
-                    cur.children.Add(n);
+                    if (cur != null)
+                    {
+                        n.parent = cur;
+                        cur.children.Add(n);
+                    }
                     cur = n;
                     break;
                 case ']':
                     addNodeValue(cur, v);
-                    cur = cur.parent;
+                    if (cur.parent != null) cur = cur.parent;
                     break;
                 case ',':
                     addNodeValue(cur, v);
@@ -68,141 +95,67 @@ public class Day13 : BaseDay
                     break;
             }
         }
-        return b;
+        return cur;
     }
 
     private static void addNodeValue(Node cur, StringBuilder v)
     {
         if (v.Length > 0)
         {
-            Node n = new Node();
-            n.parent = cur;
-            n.val = int.Parse(v.ToString());
+            Node n = new Node(int.Parse(v.ToString()));
+            n.parent = cur;            
             cur.children.Add(n);
             v.Clear();
         }
-    }
+    }   
 
-    private enum CompareState { pass, fail, next };
-
-    private class Packet : IComparable<Packet>
+    private class Node : IComparable<Node>
     {
-        internal Node Root;
-        public Packet (Node root)
-        {
-            Root = root;
-        }
-        
-        public int CompareTo(Packet right)
-        {
-            Pair p = new Pair(this, right);
-            p.Compare();
-            return p.correctOrder ? 1 : -1;
-        }
-    }
-
-    private class Pair
-    {
-        public Packet First;
-        public Packet Second;
-        public bool correctOrder;        
-
-        public Pair(Packet first, Packet second)
-        {
-            this.First = first;
-            this.Second = second;
-        }
-
-        internal void Compare()
-        {
-            Node left = First.Root;
-            Node right = Second.Root;
-
-            CompareState state = CompareState.next;
-            while (state == CompareState.next)
-            {
-                state = Compare(left.Next(), right.Next());
-            }
-            if (state == CompareState.pass) correctOrder = true;
-            else correctOrder = false;
-        }
-
-        private CompareState Compare(Node? left, Node? right)
-        {
-            if (left == null && right == null) return CompareState.next;
-            if (left == null) return CompareState.pass;
-            if (right == null) return CompareState.fail;
-
-            // both val
-            if (left.IsVal && right.IsVal)
-            {
-                if (left.val < right.val) return CompareState.pass;
-                if (left.val > right.val) return CompareState.fail;
-                if (left.val == right.val) return CompareState.next;
-            }
-            // both list
-            else if (!left.IsVal && !right.IsVal)
-            {
-                CompareState state = CompareState.next;
-                while (state == CompareState.next && ((!left.Finished || !right.Finished) && !(left.Finished && right.Finished)))
-                {
-                    state = Compare(left.Next(), right.Next());
-                }
-                return state;
-            }
-            // left list, right val
-            else if (!left.IsVal && right.IsVal)
-            {
-                CompareState state = CompareState.next;
-                while (state == CompareState.next)
-                {
-                    state = Compare(left.Next(), right);
-                }
-                return state;
-            }
-            // right list, left val
-            else if (!right.IsVal && left.IsVal)
-            {
-                CompareState state = CompareState.next;
-                while (state == CompareState.next)
-                {
-                    state = Compare(left, right.Next());
-                }
-                return state;
-            }
-
-            return CompareState.next;
-        }
-
-        
-    }
-
-    private class Node
-    {
-        public int? val;
-        public List<Node> children = new List<Node>();
+        public int val;
+        public List<Node>? children;
         public Node parent;
-        public bool IsVal => val != null;
-        public bool Finished => idx >= children.Count();
-        private int idx = 0;
-
-        public Node? Next()
-        {            
-            Debug.Assert (val == null);
-            if (idx <= children.Count() - 1) return children[idx++];
-            return null;            
+        public bool IsVal => children == null;
+        public override string ToString()
+        {
+            if (IsVal) return val.ToString();
+            return '[' + string.Join(',', children) + ']';
         }
-    }
-       
 
-    public override ValueTask<string> Solve_2()
-    {
-        solve2();
-        return new(_partTwo);
-    }
+        public Node()
+        {
+            children = new List<Node>();
+        }
 
-    private void solve2()
-    {
-        _partTwo = "Not Solved";
+        public Node(int v)
+        {
+            val = v;
+        }
+
+        public int CompareTo(Node? right)
+        {
+            if (IsVal && right.IsVal) return val.CompareTo(right.val);
+            if (!IsVal && !right.IsVal)
+            {
+                int idx = 0;
+                while (idx < children.Count || idx < right.children.Count)
+                {
+                    if (idx >= children.Count) return -1;
+                    if (idx >= right.children.Count) return 1;
+                    int c = children[idx].CompareTo(right.children[idx]);
+                    if (c != 0) return c;
+                    idx++;
+                }
+                return 0;
+            }
+            if (!right.IsVal) return -right.CompareTo(this);
+            if (!IsVal)
+            {
+                if (children.Count == 0) return -1;
+                int c = children[0].CompareTo(right);
+                if (c != 0) return c;
+                if (children.Count > 1) return 1;
+            }
+            return 0;
+        }
     }
 }
