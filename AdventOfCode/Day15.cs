@@ -90,7 +90,7 @@ public class Day15 : BaseDay
         int bx = 0;
         int by = 0;
         //var solution = new ConcurrentBag<(int,int)>();
-        const int space = 4000000;
+        const int space = 10000;
         //bool withinRange;
         Stopwatch s = Stopwatch.StartNew();
         for (int y = 0; y <= space; y++)            
@@ -102,7 +102,7 @@ public class Day15 : BaseDay
                 {
                     if (AoCHelper.GetManhattanDist(x, y, sensors[s].X, sensors[s].Y) <= sensors[s].D)
                     {
-                        withinRange = true;
+                        withinRange = true;                        
                         break;
                     }
                 }
@@ -112,14 +112,11 @@ public class Day15 : BaseDay
                     by = y;
                     Console.Out.WriteLine(bx + "," + by + "  ");
                 }               
-            });// end parallel.for
-            if (y%100 == 0)
-            {
-                Console.Out.WriteLine("{0} time in milliseconds: {1}", y, s.ElapsedMilliseconds);
-                s.Reset();
-                s.Start();
-            }
+            });// end parallel.for            
         }
+        Console.Out.WriteLine("100000 grid time in milliseconds: {0}", s.ElapsedMilliseconds);
+        s.Reset();
+        s.Start();
 
         long tuningFreq = (long)(bx)  * 4000000 + (long)by;
         _partTwo = (tuningFreq.ToString());
