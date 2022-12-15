@@ -89,20 +89,25 @@ public class Day15 : BaseDay
 
         int bx = 0;
         int by = 0;
-        //var solution = new ConcurrentBag<(int,int)>();
-        const int space = 10000;
-        //bool withinRange;
-        Stopwatch s = Stopwatch.StartNew();
-        for (int y = 0; y <= space; y++)            
+        const int space = 4000000;
+        Stopwatch stopW = Stopwatch.StartNew();
+
+        Parallel.For(0, space, (y, state) =>
         {
-            Parallel.For(0, space, x =>
+            bool withinRange;
+            int d;
+            for (int x = 0; x <= space; x++)
             {
-                bool withinRange = false;
+                if (state.ShouldExitCurrentIteration) return;
+                withinRange = false;                
                 for (int s = 0; s < numSensors; s++)
                 {
-                    if (AoCHelper.GetManhattanDist(x, y, sensors[s].X, sensors[s].Y) <= sensors[s].D)
+                    d = AoCHelper.GetManhattanDist(x, y, sensors[s].X, sensors[s].Y);
+                    if (d <= sensors[s].D)
                     {
-                        withinRange = true;                        
+                        withinRange = true;
+                        if (x >= sensors[s].X) x += Math.Abs(sensors[s].X - (d - Math.Abs(sensors[s].Y - y))) + 1;
+                        else x += Math.Abs(sensors[s].X - x) + sensors[s].D - Math.Abs(sensors[s].Y - y);
                         break;
                     }
                 }
@@ -110,13 +115,14 @@ public class Day15 : BaseDay
                 {
                     bx = x;
                     by = y;
-                    Console.Out.WriteLine(bx + "," + by + "  ");
-                }               
-            });// end parallel.for            
-        }
-        Console.Out.WriteLine("100000 grid time in milliseconds: {0}", s.ElapsedMilliseconds);
-        s.Reset();
-        s.Start();
+                    //Console.Out.WriteLine(bx + "," + by + "  ");
+                    state.Break();                   
+                }
+            }        
+        });// end parallel.for   
+        Console.Out.WriteLine("{0} grid time in milliseconds: {1}", space, stopW.ElapsedMilliseconds);
+        stopW.Reset();
+        stopW.Start();
 
         long tuningFreq = (long)(bx)  * 4000000 + (long)by;
         _partTwo = (tuningFreq.ToString());
