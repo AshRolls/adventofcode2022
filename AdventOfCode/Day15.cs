@@ -65,6 +65,59 @@ public class Day15 : BaseDay
         _partOne = withinRange.ToString();
     }
 
+    public override ValueTask<string> Solve_2()
+    {
+        solve2();
+        return new(_partTwo);
+    }
+
+    private void solve2()
+    {
+        int numSensors = _input.Length;
+
+        Sensor[] sensors = new Sensor[numSensors];
+        HashSet<Beacon> beacons = new HashSet<Beacon>();
+
+        for (int i = 0; i < _input.Length; i++)
+        {
+            var v = AoCHelper.GetNumsFromStr(_input[i]);
+            sensors[i] = new Sensor(v[0], v[1], AoCHelper.GetManhattanDist(v[0], v[1], v[2], v[3]));
+            _ = beacons.Add(new Beacon(v[2], v[3]));
+        }
+
+        int bx = 0;
+        int by = 0;
+        const int space = 4000000;
+        bool withinRange;
+        for (int y = 0; y <= space; y++)            
+        {
+            //Console.Out.Write(Console.Out.NewLine);
+            for (int x = 0; x <= space; x++)
+            {
+                withinRange = false;
+                for (int s = 0; s < numSensors; s++)
+                {
+                    if (AoCHelper.GetManhattanDist(x, y, sensors[s].X, sensors[s].Y) <= sensors[s].D)
+                    {
+                        withinRange = true;                        
+                        break;
+                    }
+                }
+                if (!withinRange)
+                {
+                    bx = x;
+                    by = y;
+                    //Console.Out.Write('.');
+                    Console.Out.WriteLine(bx + "," + by + ":  " + ((long)bx * 4000000 + (long)by));
+                }
+                //else Console.Out.Write('#');                
+            }
+        }
+
+        long tuningFreq = (long)(bx)  * 4000000 + (long)by;
+        _partTwo = (tuningFreq.ToString());
+    }
+
 
 
     private struct Sensor
@@ -91,16 +144,5 @@ public class Day15 : BaseDay
 
         public int X;            
         public int Y;
-    }
-
-    public override ValueTask<string> Solve_2()
-    {
-        solve2();
-        return new(_partTwo);
-    }
-
-    private void solve2()
-    {
-        _partTwo = "Not Solved";
     }
 }
