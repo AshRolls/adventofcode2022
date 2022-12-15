@@ -26,7 +26,7 @@ public class Day14 : BaseDay
         int yMax = int.MinValue;
         foreach (string line in _input)
         {
-            var vals = AoCHelper.NumsFromStr(line);
+            var vals = AoCHelper.GetNumsFromStr(line);
             for (int i = 0; i < vals.Length; i++)
             {
                 if (i % 2 != 0 && vals[i] > yMax) yMax = vals[i];                
@@ -56,7 +56,7 @@ public class Day14 : BaseDay
         int yMax = int.MinValue;
         foreach (string line in _input)
         {
-            var vals = AoCHelper.NumsFromStr(line);
+            var vals = AoCHelper.GetNumsFromStr(line);
             for (int i = 0; i < vals.Length; i++) 
                 if (i % 2 != 0 && vals[i] > yMax) yMax = vals[i];                            
         }
@@ -113,8 +113,8 @@ public class Day14 : BaseDay
             (int x, int y) curPoint;
             for (int i = 1; i < points.Length; i++)
             {
-                var l = AoCHelper.NumsFromStr(points[i - 1]);
-                var c = AoCHelper.NumsFromStr(points[i]);
+                var l = AoCHelper.GetNumsFromStr(points[i - 1]);
+                var c = AoCHelper.GetNumsFromStr(points[i]);
                 lastPoint = (l[0], l[1]);
                 curPoint = (c[0], c[1]);
 

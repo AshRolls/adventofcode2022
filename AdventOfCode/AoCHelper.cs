@@ -4,7 +4,7 @@ namespace AdventOfCode
 {
     internal static class AoCHelper
     {
-        public static int[] NumsFromStr(string s) => Array.ConvertAll(Regex.Matches(s, @"[0-9]+").OfType<Match>().Select(m => m.Groups[0].Value).ToArray(), x => int.Parse(x));
+        public static int[] GetNumsFromStr(string s) => Array.ConvertAll(Regex.Matches(s, @"-?\d+").OfType<Match>().Select(m => m.Groups[0].Value).ToArray(), x => int.Parse(x));
         
         public static string ToDebugString<TKey, TValue>(IDictionary<TKey, TValue> dictionary)
         {
@@ -61,6 +61,11 @@ namespace AdventOfCode
             }
 
             return divisors;
+        }
+
+        public static int GetManhattanDist(int fromX, int fromY, int toX, int toY)
+        {
+            return Math.Abs(fromX - toX) + Math.Abs(fromY - toY);
         }
     }
 

@@ -100,11 +100,11 @@ public class Day11 : BaseDay
         {
             opSelf = true;
         }
-        int testVal = AoCHelper.NumsFromStr(strs[3]).First();
+        int testVal = AoCHelper.GetNumsFromStr(strs[3]).First();
 
         Monkey m = new Monkey(opVal, opSelf, testVal);
 
-        foreach (int w in AoCHelper.NumsFromStr(strs[1])) m._items.Enqueue(w);
+        foreach (int w in AoCHelper.GetNumsFromStr(strs[1])) m._items.Enqueue(w);
 
         if (strs[2].Split(' ')[^2][0] == '+') m.Operation = Monkey.OperationAdd;        
         else if (!opSelf) m.Operation = Monkey.OperationMult;
