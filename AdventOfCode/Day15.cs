@@ -66,7 +66,6 @@ public class Day15 : BaseDay
                              
         _partOne = withinRange.ToString();
     }
-
     public override ValueTask<string> Solve_2()
     {
         solve2();
@@ -76,22 +75,18 @@ public class Day15 : BaseDay
     private void solve2()
     {
         int numSensors = _input.Length;
-
         Sensor[] sensors = new Sensor[numSensors];
-        HashSet<Beacon> beacons = new HashSet<Beacon>();
-
         for (int i = 0; i < _input.Length; i++)
         {
             var v = AoCHelper.GetNumsFromStr(_input[i]);
             sensors[i] = new Sensor(v[0], v[1], AoCHelper.GetManhattanDist(v[0], v[1], v[2], v[3]));
-            _ = beacons.Add(new Beacon(v[2], v[3]));
         }
 
         int bx = 0;
         int by = 0;
         const int space = 4000000;
-        Stopwatch stopW = Stopwatch.StartNew();
 
+        Stopwatch stopW = Stopwatch.StartNew();
         Parallel.For(0, space, (y, state) =>
         {
             bool withinRange;
@@ -99,7 +94,7 @@ public class Day15 : BaseDay
             for (int x = 0; x <= space; x++)
             {
                 if (state.ShouldExitCurrentIteration) return;
-                withinRange = false;                
+                withinRange = false;
                 for (int s = 0; s < numSensors; s++)
                 {
                     d = AoCHelper.GetManhattanDist(x, y, sensors[s].X, sensors[s].Y);
@@ -116,19 +111,16 @@ public class Day15 : BaseDay
                     bx = x;
                     by = y;
                     //Console.Out.WriteLine(bx + "," + by + "  ");
-                    state.Break();                   
+                    state.Break();
                 }
-            }        
+            }
         });// end parallel.for   
+        stopW.Stop();
         Console.Out.WriteLine("{0} grid time in milliseconds: {1}", space, stopW.ElapsedMilliseconds);
-        stopW.Reset();
-        stopW.Start();
 
-        long tuningFreq = (long)(bx)  * 4000000 + (long)by;
+        long tuningFreq = (long)bx * 4000000 + (long)by;
         _partTwo = (tuningFreq.ToString());
     }
-
-
 
     private struct Sensor
     {
