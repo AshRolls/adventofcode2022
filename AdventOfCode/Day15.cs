@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace AdventOfCode;
 
@@ -87,19 +89,20 @@ public class Day15 : BaseDay
 
         int bx = 0;
         int by = 0;
+        //var solution = new ConcurrentBag<(int,int)>();
         const int space = 4000000;
-        bool withinRange;
+        //bool withinRange;
+        Stopwatch s = Stopwatch.StartNew();
         for (int y = 0; y <= space; y++)            
         {
-            //Console.Out.Write(Console.Out.NewLine);
-            for (int x = 0; x <= space; x++)
+            Parallel.For(0, space, x =>
             {
-                withinRange = false;
+                bool withinRange = false;
                 for (int s = 0; s < numSensors; s++)
                 {
                     if (AoCHelper.GetManhattanDist(x, y, sensors[s].X, sensors[s].Y) <= sensors[s].D)
                     {
-                        withinRange = true;                        
+                        withinRange = true;
                         break;
                     }
                 }
@@ -107,10 +110,14 @@ public class Day15 : BaseDay
                 {
                     bx = x;
                     by = y;
-                    //Console.Out.Write('.');
-                    Console.Out.WriteLine(bx + "," + by + ":  " + ((long)bx * 4000000 + (long)by));
-                }
-                //else Console.Out.Write('#');                
+                    Console.Out.WriteLine(bx + "," + by + "  ");
+                }               
+            });// end parallel.for
+            if (y%100 == 0)
+            {
+                Console.Out.WriteLine("{0} time in milliseconds: {1}", y, s.ElapsedMilliseconds);
+                s.Reset();
+                s.Start();
             }
         }
 
