@@ -1,7 +1,6 @@
 ﻿using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Linq;
 
@@ -30,12 +29,12 @@ public class Day16 : BaseDay
         Valve startValve = setupGraph(g);
         collapseGraph(g);
         BitVector32 opened = createIdx(g);
-
-        const int maxCost = 30;
         
         ValveAction act = new ValveAction(startValve, ActionEnum.MOVE, 0);
+#if DEBUG
         stack.Push(act);
-        traverseGraph(g, act, act, opened, 0, maxCost, 0);
+#endif        
+        traverseGraph(g, act, act, opened, 0, 0);
 
         _partOne = bestPressure.ToString();
     }
@@ -54,56 +53,92 @@ public class Day16 : BaseDay
         return bv;
     }
 
-    private int bestPressure = 0;   
+    private int bestPressure = 0;       
+    private const int maxCost = 30;
+    Dictionary<Valve, int> valveMasks = new Dictionary<Valve, int>();
+#if DEBUG
     private long vChecked = 0;
     private Stack<ValveAction> stack = new Stack<ValveAction>();
-    Dictionary<Valve, int> valveMasks = new Dictionary<Valve, int>();
-
-
-    private void traverseGraph(Graph graph, ValveAction lastAct, ValveAction act, BitVector32 opened, int curCost, int maxCost, int curPressure)
-    {        
+#endif
+    
+    private void traverseGraph(Graph graph, ValveAction lastAct, ValveAction act, BitVector32 curOpened, int curCost, int curPressure)
+    {
+#if DEBUG
         Debug.Assert(curCost <= maxCost);
-        vChecked++;       
-        if (curPressure > bestPressure)
-        {
-            string path = pathFromStack(stack);
-            Console.Out.WriteLine("Cost: {0}, Pressure: {1}, Checked: {2}", curCost, curPressure, vChecked);
-            Console.Out.WriteLine("Path: {0}", path);
-            Console.Out.WriteLine();
-            bestPressure = curPressure;
-        }
+        vChecked++;
+#endif                
         if (act.Type == ActionEnum.OPEN)
         {
             curCost += act.Cost;
             curPressure += (maxCost - curCost) * act.V.Rate;
-            opened[valveMasks[act.V]] = true;                       
+            curOpened[valveMasks[act.V]] = true;                       
         }
         else
         {
             curCost += act.Cost;                       
         }
-        addNeighbours(graph, lastAct, act, opened, curCost, maxCost, curPressure);
-        _ = stack.Pop();
 
-    }
-
-    private void addNeighbours(Graph graph, ValveAction lastAct, ValveAction act, BitVector32 opened, int curCost, int maxCost, int curPressure)
-    {
-        foreach (var neighbour in graph.AdjacencyList[act.V])
+        if (curPressure > bestPressure)
         {
-            if (((lastAct.Type == ActionEnum.MOVE && lastAct.V != neighbour.Key) || lastAct.Type == ActionEnum.OPEN) && curCost + neighbour.Value <= maxCost)
+            bestPressure = curPressure;
+#if DEBUG
+            string path = pathFromStack(stack);
+            //string path = lastAct.ToString() + " " + act.ToString();
+            Console.Out.WriteLine("Cost: {0}, Pressure: {1}, Checked: {2}", curCost, curPressure, vChecked);
+            Console.Out.WriteLine("Path: {0}", path);
+            Console.Out.WriteLine();
+#endif
+        }
+
+        // prune
+        // calculate max potential remaining pressure from all nodes that can still be opened.
+        if (curCost == 30)
+        {
+#if DEBUG
+            _ = stack.Pop();
+#endif
+            return;
+        }
+        int potential = 0;
+        foreach (KeyValuePair<Valve, int> kvp in valveMasks)
+        {
+            if (!curOpened[kvp.Value]) potential += (maxCost - curCost) * kvp.Key.Rate;
+        }
+        if (potential + curPressure < bestPressure)
+        {
+#if DEBUG
+            _ = stack.Pop();
+#endif
+            return;
+        }
+
+        //Parallel.ForEach(graph.AdjacencyList[act.V], (edge) =>
+        ValveAction newAct;
+        foreach (KeyValuePair<Valve, int> edge in graph.AdjacencyList[act.V])
+        {
+            if (((lastAct.Type == ActionEnum.MOVE && lastAct.V.Name != edge.Key.Name) || lastAct.Type == ActionEnum.OPEN) 
+                && curCost + edge.Value <= maxCost)
             {
-                ValveAction newAct = new ValveAction(neighbour.Key, ActionEnum.MOVE, neighbour.Value);
+                newAct = new ValveAction(edge.Key, ActionEnum.MOVE, edge.Value);
+#if DEBUG
                 stack.Push(newAct);
-                traverseGraph(graph, act, newAct, opened, curCost, maxCost, curPressure);
+#endif
+                traverseGraph(graph, act, newAct, curOpened, curCost, curPressure);
             }
-        }
-        if (act.V.Rate > 0 && /*!opened.Contains(act.V)*/!opened[valveMasks[act.V]] && curCost + 1 <= maxCost)
+        }     
+        
+        if (act.V.Rate > 0 && !curOpened[valveMasks[act.V]] && curCost + 1 <= maxCost)
         {
-            ValveAction newAct = new ValveAction(act.V, ActionEnum.OPEN, 1);
+            newAct = new ValveAction(act.V, ActionEnum.OPEN, 1);
+#if DEBUG
             stack.Push(newAct);
-            traverseGraph(graph, act, newAct, opened, curCost, maxCost, curPressure);    
+#endif
+            traverseGraph(graph, act, newAct, curOpened, curCost, curPressure);
         }
+#if DEBUG
+        _ = stack.Pop();
+#endif
+
     }
 
     private string pathFromStack(Stack<ValveAction> stack)
@@ -117,14 +152,6 @@ public class Day16 : BaseDay
             sb.Append(" ");
         }
         return sb.ToString();
-    }
-
-    private void checkBestPressure(int pressure)
-    {
-        if (pressure > bestPressure)
-        {
-            bestPressure = pressure;
-        }         
     }
 
     private static void collapseGraph(Graph g)
