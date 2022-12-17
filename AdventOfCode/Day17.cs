@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Text;
 
@@ -9,6 +10,7 @@ public class Day17 : BaseDay
     private readonly string[] _input;
     private string _partOne;
     private string _partTwo;
+    private static int _pagesize = 100000;
 
     public Day17()
     {
@@ -23,13 +25,76 @@ public class Day17 : BaseDay
 
     private void solve1()
     {
+        const long rocksToAdd = 2022;
         const int width = 9;
         const int height = 8;
-        Rock[] rocks = new Rock[5];        
+        Rock[] rocks = setupRocks();
+
+        CollisionGrid cg = new CollisionGrid(width, height);
+        
+        Run(rocksToAdd, rocks, cg);
+
+        _partOne = cg.GetTowerHeight().ToString();
+    }
+
+    public override ValueTask<string> Solve_2()
+    {
+        solve2();
+        return new(_partTwo);
+    }
+
+    private void solve2()
+    {
+        const long rocksToAdd = 1000000000000;
+        const int width = 9;
+        const int height = 8;
+        Rock[] rocks = setupRocks();
+
+        CollisionGrid cg = new CollisionGrid(width, height);
+
+        Run(rocksToAdd, rocks, cg);
+
+        _partTwo = cg.GetTowerHeight().ToString();
+    }
+
+    private void Run(long rocksToAdd, Rock[] rocks, CollisionGrid cg)
+    {
+        Rock curRock;
+        long rocksAdded = 0;
+        int jet = 0;
+        bool addNew = true;
+        Stopwatch sw = Stopwatch.StartNew();
+        while (rocksAdded <= rocksToAdd)
+        {
+            if (addNew)
+            {
+                curRock = rocks[rocksAdded++ % 5];
+                if (rocksAdded % 1000000 == 0)
+                {                                    
+                    long ms = sw.ElapsedMilliseconds;
+                    long minRem = ((rocksToAdd / 1000000) * ms) / 1000 / 60;
+                    Console.Out.WriteLine("{4}%, Mins: {3}, Rocks Added: {0}, Height: {1}, Time: {2}", rocksAdded, cg.GetTowerHeight().ToString(), ms, minRem, ((float)rocksAdded/(float)rocksToAdd)*(float)100);
+                    sw.Restart();                    
+                }
+                cg.AddNewRock(curRock);
+            }
+
+            pushRock(cg, jet++);
+            if (jet > _input[0].Length - 1) jet = 0;
+
+            addNew = !cg.DropRock();
+        }
+        sw.Stop();
+    }
+
+    private Rock[] setupRocks()
+    {
+        Rock[] rocks = new Rock[5];
+
         byte[,] shape1 = {  { 2, 1, 0, 0, 0 },
                             { 2, 1, 0, 0, 0 },
                             { 2, 1, 0, 0, 0 },
-                            { 2, 1, 0, 0, 0 },                           
+                            { 2, 1, 0, 0, 0 },
         };
         byte[,] shape2 = {  { 0, 2, 1, 0, 0 },
                             { 2, 1, 1, 1, 0 },
@@ -61,32 +126,8 @@ public class Day17 : BaseDay
         rocks[2] = rock3;
         rocks[3] = rock4;
         rocks[4] = rock5;
-        
-        CollisionGrid cg = new CollisionGrid(width, height);        
-                
-        Rock curRock;
-        int rocksAdded = 0;
-        int jet = 0;
-        bool addNew = true;
-        while (rocksAdded <= 2022)
-        {            
-            if (addNew)
-            {                         
-                curRock = rocks[rocksAdded++ % 5];                
-                cg.AddNewRock(curRock);
-                //Console.Out.WriteLine();
-                //cg.PrintGrid();
-                //cg.PrintTower();
-                //Thread.Sleep(2000);
-            }
 
-            pushRock(cg, jet++);            
-            if (jet > _input[0].Length - 1) jet = 0;
-            
-            addNew = !cg.DropRock();            
-        }
-        
-        _partOne = cg.GetTowerHeight().ToString();
+        return rocks;
     }
 
     private void pushRock(CollisionGrid cg, int jetIdx)
@@ -113,6 +154,8 @@ public class Day17 : BaseDay
         private bool[,] _grid;
         private int _gridHeight;
         private int _gridWidth;
+        private long _lastHighestHeight;
+        private Row _lastHighestRow;
 
         public CollisionGrid(int width, int height)
         {
@@ -120,10 +163,11 @@ public class Day17 : BaseDay
             _gridHeight = height;
             _grid = new bool[width, height];
             _rows = new Row[height];
-            _baseRow = new Row();
+            _baseRow = new Row(0);
             for (int i = 0; i < width; i++) _baseRow.Filled[i] = true;
             _highestSolidRow = _baseRow;                        
-           
+           _lastHighestHeight = 0;
+           _lastHighestRow = _baseRow;
         }        
 
         internal void AddNewRock(Rock curRock)
@@ -211,7 +255,16 @@ public class Day17 : BaseDay
                         highestFilledRow = _rows[y + _ry];
                     }
                 }
-                if (highestFilledRow != null && checkIfHigher(highestFilledRow)) _highestSolidRow = highestFilledRow;
+                if (highestFilledRow != null && highestFilledRow.Height > _highestSolidRow.Height)
+                {
+                    _highestSolidRow = highestFilledRow;
+                    if (_highestSolidRow.Height - _lastHighestHeight > _pagesize)
+                    {
+                        _lastHighestHeight = _highestSolidRow.Height;
+                        _lastHighestRow.PrevRow = null; // break the chain to free mem
+                        _lastHighestRow = _highestSolidRow;
+                    }
+                }
             }
             else
             {
@@ -220,30 +273,14 @@ public class Day17 : BaseDay
                 {
                     _rows[i] = _rows[i - 1];
                 }
-                if (_rows[1].PrevRow == null)
+                if (_rows[1].PrevRow != null)
                 {
-                    _rows[0] = new Row();
-                    _rows[1].PrevRow = _rows[0];
-                }
-                else
-                {
-                    _rows[0] = _rows[1].PrevRow;
-                }
+                    _rows[0] = _rows[1].PrevRow;                    
+                }                
                 copyRowsToGrid();
             }
 
             return dropping;
-        }
-
-        private bool checkIfHigher(Row highestFilledRow)
-        {
-            Row curRow = _highestSolidRow;
-            while (curRow != _baseRow)
-            {
-                if (curRow == highestFilledRow) return false;
-                curRow = curRow.PrevRow;
-            }
-            return true;
         }
 
         private void copyRowsToGrid()
@@ -259,27 +296,25 @@ public class Day17 : BaseDay
 
         private void fillRows()
         {
-            Row curRow = new Row();
-            for (int i = _gridHeight; i > 1 ; i--)
+            List<Row> rs = new List<Row>();
+            for (int i = 1; i<_gridHeight; i++)
             {
-                Row newR = new Row();
-                curRow.PrevRow = newR;
-                curRow = newR;
-                _rows[i - 1] = curRow;
+                Row newRow = new Row(_highestSolidRow.Height + i);
+                rs.Add(newRow);
             }
-            curRow.PrevRow = _highestSolidRow;
+            Debug.Assert(rs.Count == 7);
+            for (int i = rs.Count - 1; i > 0; i--)
+            {
+                rs[i].PrevRow = rs[i - 1];
+                _rows[i + 1] = rs[i];
+            }
+            rs[0].PrevRow = _highestSolidRow;
+            _rows[1] = rs[0];
         }
 
-        public int GetTowerHeight()
+        public long GetTowerHeight()
         {
-            int h = 0;
-            Row curRow = _highestSolidRow;
-            while (curRow != _baseRow)
-            {
-                curRow = curRow.PrevRow;
-                h++;
-            }
-            return h;
+            return _highestSolidRow.Height;            
         }
 
         public void PrintGrid()
@@ -316,9 +351,11 @@ public class Day17 : BaseDay
     {
         public Row PrevRow;
         public bool[] Filled = new bool[9];
+        public long Height;
         
-        public Row()
+        public Row(long height)
         {
+            Height = height;
             // walls
             Filled[0] = true;
             Filled[^1] = true;
@@ -334,16 +371,5 @@ public class Day17 : BaseDay
             }
             return sb.ToString();
         }
-    }
-
-    public override ValueTask<string> Solve_2()
-    {
-        solve2();
-        return new(_partTwo);
-    }
-
-    private void solve2()
-    {
-        _partTwo = "Not Solved";
-    }
+    }   
 }
