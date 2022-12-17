@@ -19,7 +19,6 @@ public class Day16 : BaseDay
     private int _bestPressure = 0;
     private int _maxCost = 30;
     private Dictionary<Valve, int> _valveMasks;
-    private uint _valveAllMask;
 #if DEBUG
     private long _vChecked;
     private Stack<ValveAction> _stack;
@@ -67,7 +66,8 @@ public class Day16 : BaseDay
     private void solve2()
     {
         BitVector32 opened = createIdx();
-
+        BitVector32 visited1 = new BitVector32(0);
+        BitVector32 visited2 = new BitVector32(0);
         ValveAction act1 = new ValveAction(_startValve, ActionEnum.MOVE, 0);
         ValveAction act2 = new ValveAction(_startValve, ActionEnum.MOVE, 0);
         
@@ -78,42 +78,23 @@ public class Day16 : BaseDay
         _stack2 = new Stack<(ValveAction,ValveAction)>();
         _stack2.Push((act1,act2));
 #endif                
-        traverseGraph2((act1,act2), (act1,act2), opened, (0,0), 0);
+        traverseGraph2(visited1, visited2, act1, act2, 0, 0, opened, 0);
 
         _partTwo = _bestPressure.ToString();        
     }
 
-    private void traverseGraph2((ValveAction, ValveAction) lastActs, (ValveAction, ValveAction) acts, BitVector32 curOpened, (int,int) curCost, int curPressure)
+    private void traverseGraph2(BitVector32 visited1, BitVector32 visited2, 
+                                ValveAction acts1, ValveAction acts2, 
+                                int curCost1, int curCost2, 
+                                BitVector32 curOpened, int curPressure)
     {
 #if DEBUG
-        Debug.Assert(curCost.Item1 <= _maxCost && curCost.Item2 <= _maxCost);
+        //Debug.Assert(curCost1 <= _maxCost && curCost2 <= _maxCost);
         _vChecked++;
-#endif                
-        if (acts.Item1.Type == ActionEnum.OPEN)
-        {
-            curCost.Item1 += acts.Item1.Cost;
-            curPressure += (_maxCost - curCost.Item1) * acts.Item1.V.Rate;
-            curOpened[_valveMasks[acts.Item1.V]] = true;
-        }
-        else
-        {
-            curCost.Item1 += acts.Item1.Cost;
-        }
+#endif
 
-        if (acts.Item2.Type == ActionEnum.OPEN)
-        {
-            curCost.Item2 += acts.Item2.Cost;
-            // check we are not trying to open the same valve at the same time.
-            if (!curOpened[_valveMasks[acts.Item2.V]])
-            {
-                curPressure += (_maxCost - curCost.Item2) * acts.Item2.V.Rate;
-                curOpened[_valveMasks[acts.Item2.V]] = true;
-            }
-        }
-        else
-        {
-            curCost.Item2 += acts.Item2.Cost;
-        }
+        doAction(ref visited1, acts1, ref curCost1, ref curOpened, ref curPressure);
+        doAction(ref visited2, acts2, ref curCost2, ref curOpened, ref curPressure);
 
         if (curPressure > _bestPressure)
         {
@@ -121,14 +102,14 @@ public class Day16 : BaseDay
 #if DEBUG
             string path = pathFromStack(_stack2);
             //string path = lastAct.ToString() + " " + act.ToString();
-            Console.Out.WriteLine("Cost: {0}, Pressure: {1}, Checked: {2}", curCost, curPressure, _vChecked);
+            Console.Out.WriteLine("Cost: {0}, Pressure: {1}, Checked: {2}", (curCost1, curCost2), curPressure, _vChecked);
             Console.Out.WriteLine(path);
             Console.Out.WriteLine();
 #endif
         }
 
         // pruning        
-        if (curCost.Item1 == _maxCost && curCost.Item2 == _maxCost)
+        if (curCost1 == _maxCost && curCost2 == _maxCost)
         {
 #if DEBUG
             _ = _stack2.Pop();
@@ -141,15 +122,15 @@ public class Day16 : BaseDay
         {
             if (!curOpened[kvp.Value])
             {
-                int timeRemaining1 = _maxCost - curCost.Item1;
-                int timeRemaining2 = _maxCost - curCost.Item2;
-                if (kvp.Key.shortestDist[acts.Item1.V] < timeRemaining1)
+                int timeRemaining1 = _maxCost - curCost1;
+                int timeRemaining2 = _maxCost - curCost2;
+                if (kvp.Key.shortestDist[acts1.V] < timeRemaining1)
                 {
-                    potential += (timeRemaining1 - kvp.Key.shortestDist[acts.Item1.V]) * kvp.Key.Rate;
+                    potential += (timeRemaining1 - kvp.Key.shortestDist[acts1.V]) * kvp.Key.Rate;
                 }
-                if (kvp.Key.shortestDist[acts.Item2.V] < timeRemaining2)
+                if (kvp.Key.shortestDist[acts2.V] < timeRemaining2)
                 {
-                    potential += (timeRemaining2 - kvp.Key.shortestDist[acts.Item2.V]) * kvp.Key.Rate;
+                    potential += (timeRemaining2 - kvp.Key.shortestDist[acts2.V]) * kvp.Key.Rate;
                 }
             }
         }
@@ -161,54 +142,62 @@ public class Day16 : BaseDay
             return;
         }
 
-        List<ValveAction> newActs1 = new List<ValveAction>();
-        foreach (KeyValuePair<Valve, int> edge in _g.AdjacencyList[acts.Item1.V])
-        {
-            if (((lastActs.Item1.Type == ActionEnum.MOVE && lastActs.Item1.V.Name != edge.Key.Name) || lastActs.Item1.Type == ActionEnum.OPEN)
-                && curCost.Item1 + edge.Value <= _maxCost)
-            {
-
-                ValveAction newAct = new ValveAction(edge.Key, ActionEnum.MOVE, edge.Value);
-                newActs1.Add(newAct);
-            }
-        }
-
-        if (acts.Item1.V.Rate > 0 && !curOpened[_valveMasks[acts.Item1.V]] && curCost.Item1 + 1 <= _maxCost)
-        {
-            ValveAction newAct = new ValveAction(acts.Item1.V, ActionEnum.OPEN, 1);
-            newActs1.Add(newAct);
-        }
-
-        List<ValveAction> newActs2 = new List<ValveAction>();
-        foreach (KeyValuePair<Valve, int> edge in _g.AdjacencyList[acts.Item2.V])
-        {
-            if (((lastActs.Item2.Type == ActionEnum.MOVE && lastActs.Item2.V.Name != edge.Key.Name) || lastActs.Item2.Type == ActionEnum.OPEN)
-                && curCost.Item2 + edge.Value <= _maxCost)
-            {
-                ValveAction newAct = new ValveAction(edge.Key, ActionEnum.MOVE, edge.Value);
-                newActs2.Add(newAct);
-            }
-        }
-
-        if (acts.Item2.V.Rate > 0 && !curOpened[_valveMasks[acts.Item2.V]] && curCost.Item2 + 1 <= _maxCost)
-        {
-            ValveAction newAct = new ValveAction(acts.Item2.V, ActionEnum.OPEN, 1);
-            newActs2.Add(newAct);
-        }
+        List<ValveAction> newActs1 = addEdgeActions(visited1, acts1, curCost1, ref curOpened);
+        List<ValveAction> newActs2 = addEdgeActions(visited2, acts2, curCost2, ref curOpened);
 
         foreach (ValveAction v1 in newActs1)
         {
             foreach (ValveAction v2 in newActs2)
             {
 #if DEBUG
-                _stack2.Push((v1,v2));
+                _stack2.Push((v1, v2));
 #endif
-                traverseGraph2(acts, (v1,v2), curOpened, curCost, curPressure);
+                traverseGraph2(visited1, visited2, v1, v2, curCost1, curCost2, curOpened, curPressure);
             }
         }
 #if DEBUG
         _ = _stack2.Pop();
 #endif
+    }
+
+    private List<ValveAction> addEdgeActions(BitVector32 visited, ValveAction acts, int curCost, ref BitVector32 curOpened)
+    {
+        List<ValveAction> newActs = new List<ValveAction>();
+        if (acts.V.Rate > 0 && !curOpened[_valveMasks[acts.V]] && curCost + 1 <= _maxCost)
+        {
+            ValveAction newAct = new ValveAction(acts.V, ActionEnum.OPEN, 1);
+            newActs.Add(newAct);
+        }
+        foreach (KeyValuePair<Valve, int> edge in _g.AdjacencyList[acts.V])
+        {
+            if (!visited[_valveMasks[edge.Key]] && curCost + edge.Value <= _maxCost)
+            {
+
+                ValveAction newAct = new ValveAction(edge.Key, ActionEnum.MOVE, edge.Value);
+                newActs.Add(newAct);
+            }
+        }
+        return newActs;
+    }
+
+    private void doAction(ref BitVector32 visited, ValveAction acts, ref int curCost, ref BitVector32 curOpened, ref int curPressure)
+    {
+        if (acts.Type == ActionEnum.OPEN)
+        {
+            curCost += acts.Cost;
+            // check we are not trying to open the same valve at the same time.
+            if (!curOpened[_valveMasks[acts.V]])
+            {
+                curPressure += (_maxCost - curCost) * acts.V.Rate;
+                curOpened[_valveMasks[acts.V]] = true;
+            }
+            visited = new BitVector32(0);
+        }
+        else
+        {
+            curCost += acts.Cost;
+            visited[_valveMasks[acts.V]] = true;
+        }
     }
 
     private void traverseGraph(ValveAction lastAct, ValveAction act, BitVector32 curOpened, int curCost, int curPressure)
@@ -336,8 +325,7 @@ public class Day16 : BaseDay
             int mask = BitVector32.CreateMask(lastBit);
             _valveMasks.Add(vs[i], mask);
             lastBit = mask;
-        }
-        _valveAllMask = (uint)(_g.AdjacencyList.Count * _g.AdjacencyList.Count);
+        }        
         return bv;
     }
 
