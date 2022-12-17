@@ -99,10 +99,10 @@ public class Day16 : BaseDay
         if (curPressure > _bestPressure)
         {
             _bestPressure = curPressure;
+            Console.Out.WriteLine("Cost: {0}, Pressure: {1}", (curCost1, curCost2), curPressure);
 #if DEBUG
             string path = pathFromStack(_stack2);
-            //string path = lastAct.ToString() + " " + act.ToString();
-            Console.Out.WriteLine("Cost: {0}, Pressure: {1}, Checked: {2}", (curCost1, curCost2), curPressure, _vChecked);
+            //string path = lastAct.ToString() + " " + act.ToString();            
             Console.Out.WriteLine(path);
             Console.Out.WriteLine();
 #endif
