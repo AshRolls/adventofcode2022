@@ -67,7 +67,7 @@ namespace AdventOfCode
         {
             return Math.Abs(fromX - toX) + Math.Abs(fromY - toY);
         }
-    }
 
-    
+        public const char SolidBlockChar = '\u2588';        
+    }    
 }

@@ -1,6 +1,9 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Drawing;
+using System.Numerics;
+using System.Reflection.Metadata;
+using System.Runtime.Intrinsics.Arm;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace AdventOfCode;
@@ -10,7 +13,7 @@ public class Day17 : BaseDay
     private readonly string[] _input;
     private string _partOne;
     private string _partTwo;
-    private static int _pagesize = 100000;
+    private static bool _visualise = false;
 
     public Day17()
     {
@@ -26,15 +29,14 @@ public class Day17 : BaseDay
     private void solve1()
     {
         const long rocksToAdd = 2022;
-        const int width = 9;
-        const int height = 8;
-        Rock[] rocks = setupRocks();
+        const int width = 9;        
+        BitRock[] rocks = setupBitRocks();
 
-        CollisionGrid cg = new CollisionGrid(width, height);
+        BitGrid bg = new BitGrid(width);
         
-        Run(rocksToAdd, rocks, cg);
+        Run(rocksToAdd, rocks, bg);
 
-        _partOne = cg.GetTowerHeight().ToString();
+        _partOne = bg.GetTowerHeight().ToString();
     }
 
     public override ValueTask<string> Solve_2()
@@ -47,80 +49,97 @@ public class Day17 : BaseDay
     {
         const long rocksToAdd = 1000000000000;
         const int width = 9;
-        const int height = 8;
-        Rock[] rocks = setupRocks();
+        BitRock[] rocks = setupBitRocks();
 
-        CollisionGrid cg = new CollisionGrid(width, height);
+        BitGrid bg = new BitGrid(width);
 
-        Run(rocksToAdd, rocks, cg);
+        Run(rocksToAdd, rocks, bg, true);
 
-        _partTwo = cg.GetTowerHeight().ToString();
+        _partTwo = bg.GetTowerHeight().ToString();
     }
 
-    private void Run(long rocksToAdd, Rock[] rocks, CollisionGrid cg)
+    private void Run(long rocksToAdd, BitRock[] rocks, BitGrid g, bool drop3= false)
     {
-        Rock curRock;
+        BitRock curRock;
         long rocksAdded = 0;
         int jet = 0;
         bool addNew = true;
+#if TIMED
+        int dropped = 0;
+        int highestDropped = 0;
         Stopwatch sw = Stopwatch.StartNew();
+#endif
         while (rocksAdded <= rocksToAdd)
         {
             if (addNew)
             {
+#if TIMED                               
+                if (dropped > highestDropped) highestDropped = dropped;
+                dropped = 0;
+#endif
                 curRock = rocks[rocksAdded++ % 5];
-                if (rocksAdded % 1000000 == 0)
+#if TIMED
+                if (rocksAdded % 5000000 == 0)
                 {                                    
                     long ms = sw.ElapsedMilliseconds;
-                    long minRem = ((rocksToAdd / 1000000) * ms) / 1000 / 60;
-                    Console.Out.WriteLine("{4}%, Mins: {3}, Rocks Added: {0}, Height: {1}, Time: {2}", rocksAdded, cg.GetTowerHeight().ToString(), ms, minRem, ((float)rocksAdded/(float)rocksToAdd)*(float)100);
+                    long minRem = ((rocksToAdd / 5000000) * ms) / 1000 / 60 / 60;
+                    //Console.Out.WriteLine("{4}%, Mins: {3}, Rocks Added: {0}, Height: {1}, Time: {2}", rocksAdded, g.GetTowerHeight().ToString(), ms, minRem, ((float)rocksAdded/(float)rocksToAdd)*(float)100);
+                    Console.Out.WriteLine("{3}%, Height: {4}, Rocks Added: {0}, Time: {1}, Hours Rem: {2}", rocksAdded, ms, minRem, ((float)rocksAdded / (float)rocksToAdd) * (float)100, g.GetTowerHeight());
                     sw.Restart();                    
                 }
-                cg.AddNewRock(curRock);
+#endif
+                g.AddNewRock(curRock);
+#if DEBUG
+                g.PrintTower("Added Rock");
+#endif
             }
 
-            pushRock(cg, jet++);
+            pushRock(g, jet++);
+#if DEBUG
+            g.PrintTower("Pushed Rock" + _input[0][jet-1]);
+#endif
             if (jet > _input[0].Length - 1) jet = 0;
 
-            addNew = !cg.DropRock();
+            addNew = !g.DropRock();
+#if TIMED
+            dropped++;
+#endif
         }
+#if TIMED
         sw.Stop();
+        Console.Out.WriteLine(highestDropped.ToString());
+#endif
     }
 
-    private Rock[] setupRocks()
+    private BitRock[] setupBitRocks()
     {
-        Rock[] rocks = new Rock[5];
+        BitRock[] rocks = new BitRock[5];
 
-        byte[,] shape1 = {  { 2, 1, 0, 0, 0 },
-                            { 2, 1, 0, 0, 0 },
-                            { 2, 1, 0, 0, 0 },
-                            { 2, 1, 0, 0, 0 },
-        };
-        byte[,] shape2 = {  { 0, 2, 1, 0, 0 },
-                            { 2, 1, 1, 1, 0 },
-                            { 0, 2, 1, 0, 0 },
-                            { 0, 0, 0, 0, 0 },
-        };
-        byte[,] shape3 = {  { 2, 1, 0, 0, 0 },
-                            { 2, 1, 0, 0, 0 },
-                            { 2, 1, 1, 1, 0 },
-                            { 0, 0, 0, 0, 0 },
-        };
-        byte[,] shape4 = {  { 2, 1, 1, 1, 1 },
-                            { 0, 0, 0, 0, 0 },
-                            { 0, 0, 0, 0, 0 },
-                            { 0, 0, 0, 0, 0 },
-        };
-        byte[,] shape5 = {  { 2, 1, 1, 0, 0 },
-                            { 2, 1, 1, 0, 0 },
-                            { 0, 0, 0, 0, 0 },
-                            { 0, 0, 0, 0, 0 },
-        };
-        Rock rock1 = new Rock(shape1);
-        Rock rock2 = new Rock(shape2);
-        Rock rock3 = new Rock(shape3);
-        Rock rock4 = new Rock(shape4);
-        Rock rock5 = new Rock(shape5);
+        //byte[,] shape1 = {  { 0, 1},
+        //                    { 0, 1},
+        //                    { 0, 1},
+        //                    { 0, 1}                           
+        //};
+        //byte[,] shape2 = {  { 0, 0, 1, 0},
+        //                    { 0, 1, 1, 1},
+        //                    { 0, 0, 1, 0}                                                        
+        //};
+        //byte[,] shape3 = {  { 0, 1, 0, 0},
+        //                    { 0, 1, 0, 0},
+        //                    { 0, 1, 1, 1}                           
+        //};
+        //byte[,] shape4 = {  { 0, 1, 1, 1, 1 }                            
+        //};
+        //byte[,] shape5 = {  { 0, 1, 1},
+        //                    { 0, 1, 1}                           
+        //};
+
+        BitRock rock1 = new BitRock(8,  8,  8,  8, 4, 1);
+        BitRock rock2 = new BitRock(4,  14, 4,  0, 3, 3);
+        BitRock rock3 = new BitRock(8,  8,  14, 0, 3, 3);
+        BitRock rock4 = new BitRock(15, 0,  0,  0, 1, 4);
+        BitRock rock5 = new BitRock(12, 12, 0,  0, 2, 2);
+
         rocks[0] = rock1;
         rocks[1] = rock2;
         rocks[2] = rock3;
@@ -130,246 +149,232 @@ public class Day17 : BaseDay
         return rocks;
     }
 
-    private void pushRock(CollisionGrid cg, int jetIdx)
+    private void pushRock(BitGrid g, int jetIdx)
     {
         switch (_input[0][jetIdx])
         {
             case '>':
-                cg.PushRock(1);
+                g.PushRock(1);
                 break;
             default:
-                cg.PushRock(-1);
+                g.PushRock(-1);
                 break;
         }
     }
 
-    private class CollisionGrid
+    private class BitGrid
     {
-        private Rock _currentRock;
-        private int _rx;
-        private int _ry;
-        private Row[] _rows; 
-        private Row _highestSolidRow;
-        private Row _baseRow;
-        private bool[,] _grid;
-        private int _gridHeight;
-        private int _gridWidth;
-        private long _lastHighestHeight;
-        private Row _lastHighestRow;
+        private long[] _rows;
+        private long _highest;
+        private BitRock _curRock;
+        private int _rY;
+        private readonly int _width;
 
-        public CollisionGrid(int width, int height)
+        public BitGrid(int width)
         {
-            _gridWidth = width;
-            _gridHeight = height;
-            _grid = new bool[width, height];
-            _rows = new Row[height];
-            _baseRow = new Row(0);
-            for (int i = 0; i < width; i++) _baseRow.Filled[i] = true;
-            _highestSolidRow = _baseRow;                        
-           _lastHighestHeight = 0;
-           _lastHighestRow = _baseRow;
-        }        
-
-        internal void AddNewRock(Rock curRock)
-        {
-            // reset existing grid
-            for (int y = 0; y < _gridHeight; y++)
+            _width = width;
+            _rows = new long[width];
+            for (int i = 1; i < width - 1; i++)
             {
-                for (int x = 1; x < _gridWidth -1; x++) // don't reset walls
-                {
-                    _grid[x, y] = false;
-                }
+                _rows[i] = 0;
             }
-            // reset rows
-            for (int y = 0; y < _gridHeight; y++) _rows[y] = null;                            
-            _rows[0] = _highestSolidRow;
-            fillRows();
+            _rows[0] = long.MaxValue;
+            _rows[width - 1] = long.MaxValue;
 
-            // copy highest solid row to bottom of grid 
-            for (int x = 0; x < _gridWidth; x++)
+            // add base row to seventh bit
+            for (int i = 1; i < width - 1; i++)
             {
-                _grid[x, 0] = _highestSolidRow.Filled[x];
+                _rows[i] |= 128L;
             }
 
-            // add the rock 
-            _currentRock = curRock;
-            _rx = 3;
-            _ry = 3;
+            _highest = 0;
         }
 
-        internal void PushRock(int dir)
+        public void AddNewRock(BitRock curRock)
         {
-            int newX = _rx + dir;
-            bool pushable = true;
-            for (int y = 1; y < 5; y++)                
+            int shift = 8 - getHighestSolidPos();
+            // shift bits to make sure we have seven rows free at start 
+            for (int i = 1; i < _width - 1; i++)
             {
-                for (int x = 0; x < 4; x++)
-                {
-                    if ((newX + x > _gridWidth - 1 || _grid[newX + x, _ry + y]) && _currentRock.Shape[x, y] == (byte)1)
-                    {
-                        pushable = false;
-                        break;
-                    }
-                }
-                if (!pushable) break;
+                _rows[i] = _rows[i] << shift;
             }
-            if (pushable) _rx = newX;
+
+            _highest += shift;
+            _curRock = curRock;
+            _rY = 3;
         }
 
-        internal bool DropRock()
+        public void PushRock(int dir)
         {
-            // check if we are able to drop
-            bool dropping = true;
-            for (int y = 0; y < 2; y++)
+            int newRy = _rY + dir;
+            bool canPush = true;
+            for (int y = 0; y < _curRock.W; y++)
             {
-                for (int x = 0; x < 4; x++)
+                if ((_rows[newRy + y] & _curRock.SelectS(y)) != 0)
                 {
-                    if ((x + _rx > _gridWidth - 1 || _grid[x + _rx, y + _ry]) && _currentRock.Shape[x, y] == (byte)2)
-                    {
-                        dropping = false;
-                        break;
-                    }                   
+                    canPush = false;
+                    break;
                 }
-                if (!dropping) break;
+            }
+            if (canPush) _rY = newRy;
+        }
+
+        public bool DropRock()
+        {
+            bool canDrop = true;
+            for (int y = 0; y < _curRock.W; y++)
+            {
+                if ((_rows[y + _rY] & _curRock.SelectD(y)) != 0) 
+                {
+                    canDrop = false;
+                    break;
+                }
             }
 
-            if (!dropping)
+            if (canDrop)
             {
-                // add to rows as permanent and set new highest solid                
-                bool lineFilled;
-                Row highestFilledRow = null;
-                for (int y = 1; y < 5; y++)
+                for (int y = 0; y < _curRock.W; y++)
                 {
-                    lineFilled = false;
-                    for (int x = 0; x < 4; x++)
-                    {
-                        if (_currentRock.Shape[x, y] == (byte)1)
-                        {
-                            //Grid[x + _rx, y + _ry] = true;  // no need to add to grid, it will be cleared soon
-                            _rows[y + _ry].Filled[x + _rx] = true;
-                            lineFilled = true;
-                        }
-                    }
-                    if (lineFilled)
-                    {
-                        highestFilledRow = _rows[y + _ry];
-                    }
+                    _curRock.SetS(y, _curRock.SelectS(y) << 1);
+                    _curRock.SetD(y, _curRock.SelectD(y) << 1);
                 }
-                if (highestFilledRow != null && highestFilledRow.Height > _highestSolidRow.Height)
-                {
-                    _highestSolidRow = highestFilledRow;
-                    if (_highestSolidRow.Height - _lastHighestHeight > _pagesize)
-                    {
-                        _lastHighestHeight = _highestSolidRow.Height;
-                        _lastHighestRow.PrevRow = null; // break the chain to free mem
-                        _lastHighestRow = _highestSolidRow;
-                    }
-                }
+#if DEBUG
+                PrintTower("drop");
+#endif
             }
             else
             {
-                // shift rows up
-                for (int i = _gridHeight - 1; i > 0; i--)
+                for (int y = 0; y < _curRock.W; y++)
                 {
-                    _rows[i] = _rows[i - 1];
-                }
-                if (_rows[1].PrevRow != null)
-                {
-                    _rows[0] = _rows[1].PrevRow;                    
-                }                
-                copyRowsToGrid();
-            }
-
-            return dropping;
-        }
-
-        private void copyRowsToGrid()
-        {            
-            for (int y = 0; y < _gridHeight; y++)
-            {                
-                for (int x = 0; x < _gridWidth; x++)
-                {
-                    _grid[x,y] = _rows[y].Filled[x];
+                    _rows[_rY + y] = _rows[_rY + y] | _curRock.SelectS(y);
                 }
             }
+
+            return canDrop;
         }
 
-        private void fillRows()
+        private int getHighestSolidPos()
         {
-            List<Row> rs = new List<Row>();
-            for (int i = 1; i<_gridHeight; i++)
+            long curBit = 0;
+            int curBitHeight = 0;
+            int lowestBitHeight = int.MaxValue;
+            for (int i = 1; i < _width - 1; i++)
             {
-                Row newRow = new Row(_highestSolidRow.Height + i);
-                rs.Add(newRow);
+                curBit = 0;
+                curBitHeight = 0;
+                if ((_rows[i] & curBit) == 1) continue;
+                curBit++;
+                curBitHeight++;
+                while ((_rows[i] & curBit) == 0)
+                {
+                    curBit = curBit << 1;
+                    curBitHeight++;
+                }
+                if (curBitHeight < lowestBitHeight) lowestBitHeight = curBitHeight;
             }
-            Debug.Assert(rs.Count == 7);
-            for (int i = rs.Count - 1; i > 0; i--)
-            {
-                rs[i].PrevRow = rs[i - 1];
-                _rows[i + 1] = rs[i];
-            }
-            rs[0].PrevRow = _highestSolidRow;
-            _rows[1] = rs[0];
+            return lowestBitHeight;
         }
 
         public long GetTowerHeight()
         {
-            return _highestSolidRow.Height;            
+            return _highest;
         }
-
-        public void PrintGrid()
+        public void PrintTower(string msg)
         {
-            for (int y = _gridHeight - 1; y >= 0; y--)
-            {                
-                Console.Out.WriteLine(_rows[y]);
-            }
-        }
-
-        public void PrintTower()
-        {
-            Row curRow = _highestSolidRow;
-            while (curRow != _baseRow)
+            if (_visualise)
             {
-                Console.Out.WriteLine(curRow);
-                curRow = curRow.PrevRow;                
+                Thread.Sleep(150);
+                Console.Clear();
+                StringBuilder sb = new StringBuilder();
+                int bit = 1;
+                for (int i = 0; i < 24; i++)
+                {
+                    for (int y = 0; y < _width; y++)
+                    {
+                        bool show = (_rows[y] & bit) == bit;
+                        if (y >= _rY && y < _rY + _curRock.W)
+                            show = show || ((_curRock.SelectS(y - _rY) & bit) == bit);
+                        if (y == 0)
+                            sb.Append(show ? i.ToString()[^1] : ' ');
+                        else
+                            sb.Append(show ? AoCHelper.SolidBlockChar : ' ');
+                    }
+                    bit = bit << 1;
+                    if (i == 0)
+                    {
+                        sb.Append("H: ");
+                        sb.Append(_highest.ToString());
+                        sb.Append(", ");
+                        sb.Append(msg);
+                    }
+                    Console.Out.WriteLine(sb.ToString());
+                    sb.Clear();
+                }
             }
-            Console.Out.WriteLine(_baseRow);
         }
-    }        
-
-    private struct Rock
-    {
-        public Rock(byte[,] shape)
-        {
-            Shape = shape;            
-        }
-
-        public byte[,] Shape;        
     }
 
-    private class Row
+    private struct BitRock
     {
-        public Row PrevRow;
-        public bool[] Filled = new bool[9];
-        public long Height;
-        
-        public Row(long height)
+        public long S1;
+        public long S2;
+        public long S3;
+        public long S4;
+        public readonly int W;
+        public readonly int H;
+        public long D1;
+        public long D2;
+        public long D3;
+        public long D4;        
+
+        public BitRock(long s1, long s2, long s3, long s4, int width, int height)
         {
-            Height = height;
-            // walls
-            Filled[0] = true;
-            Filled[^1] = true;
+            S1 = s1;
+            S2 = s2;
+            S3 = s3;
+            S4 = s4;
+            W = width;
+            H = height;
+            D1 = S1 << 1;
+            D2 = S2 << 1;
+            D3 = S3 << 1;
+            D4 = S4 << 1;
+        }
+        public void SetS(int i, long val)
+        {
+            if (i == 0) S1 = val;
+            else if (i == 1) S2 = val;
+            else if (i == 2) S3 = val;
+            else if (i == 3) S4 = val;        
         }
 
-        public override string ToString()
+        public void SetD(int i, long val)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (bool b in Filled)
-            {
-                if (b) sb.Append('#');
-                else sb.Append('.');
-            }
-            return sb.ToString();
+            if (i == 0) D1 = val;
+            else if (i == 1) D2 = val;
+            else if (i == 2) D3 = val;
+            else if (i == 3) D4 = val;
         }
+
+        public long SelectS(int i)
+        {
+            if (i == 0) return S1;
+            else if (i == 1) return S2;
+            else if (i == 2) return S3;
+            else if (i == 3) return S4;
+            throw new Exception();
+            return 0;
+        }
+
+        public long SelectD(int i)
+        {
+            if (i == 0) return D1;
+            else if (i == 1) return D2;
+            else if (i == 2) return D3;
+            else if (i == 3) return D4;
+            throw new Exception();
+            return 0;
+        }
+
     }   
 }
