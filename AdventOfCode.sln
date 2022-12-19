@@ -21,6 +21,9 @@ Global
 		Timed|Any CPU = Timed|Any CPU
 		Timed|x64 = Timed|x64
 		Timed|x86 = Timed|x86
+		Vis|Any CPU = Vis|Any CPU
+		Vis|x64 = Vis|x64
+		Vis|x86 = Vis|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -41,6 +44,10 @@ Global
 		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Timed|x64.Build.0 = Timed|Any CPU
 		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Timed|x86.ActiveCfg = Timed|Any CPU
 		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Timed|x86.Build.0 = Timed|Any CPU
+		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Vis|Any CPU.ActiveCfg = Timed|Any CPU
+		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Vis|x64.ActiveCfg = Timed|Any CPU
+		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Vis|x86.ActiveCfg = Timed|Any CPU
+		{6B01383F-FF08-4839-BF44-2DE9071CCC37}.Vis|x86.Build.0 = Timed|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

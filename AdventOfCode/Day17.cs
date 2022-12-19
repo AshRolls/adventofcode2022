@@ -36,7 +36,7 @@ public class Day17 : BaseDay
         
         Run(rocksToAdd, rocks, bg);
 
-        _partOne = bg.GetTowerHeight().ToString();
+        _partOne = bg.Highest.ToString();
     }
 
     public override ValueTask<string> Solve_2()
@@ -55,7 +55,20 @@ public class Day17 : BaseDay
 
         Run(rocksToAdd, rocks, bg, true);
 
-        _partTwo = bg.GetTowerHeight().ToString();
+        _partTwo = bg.Highest.ToString();
+    }
+
+    private struct GridState
+    {
+        public long R1;
+        public long R2;
+        public long R3;            
+        public long R4;
+        public long R5;
+        public long R6;
+        public long R7;
+        public int rock;
+        public int jet;
     }
 
     private void Run(long rocksToAdd, BitRock[] rocks, BitGrid g, bool drop3= false)
@@ -63,28 +76,56 @@ public class Day17 : BaseDay
         BitRock curRock;
         long rocksAdded = 0;
         int jet = 0;
+        int rock = 0;
         bool addNew = true;
-#if TIMED
+        Dictionary<GridState, (long,long)> states = new Dictionary<GridState, (long,long)>();
+#if DEBUG
         int dropped = 0;
         int highestDropped = 0;
+#endif
+#if TIMED
         Stopwatch sw = Stopwatch.StartNew();
 #endif
         while (rocksAdded <= rocksToAdd)
         {
             if (addNew)
             {
-#if TIMED                               
-                if (dropped > highestDropped) highestDropped = dropped;
-                dropped = 0;
+                GridState state = new GridState();
+                state.rock = rock;
+                state.jet = jet;
+                state.R1 = g.Rows[1];
+                state.R2 = g.Rows[2];
+                state.R3 = g.Rows[3];
+                state.R4 = g.Rows[4];
+                state.R5 = g.Rows[5];
+                state.R6 = g.Rows[6];
+                state.R7 = g.Rows[7];
+                if (!states.TryAdd(state, (g.Highest, rocksAdded)))
+                {
+                    long hgtAdded = g.Highest - states[state].Item1;
+                    long rckAdded = rocksAdded - states[state].Item2;
+                    while (rocksAdded + rckAdded < rocksToAdd)
+                    {
+                        rocksAdded += rckAdded;
+                        g.Highest += hgtAdded;
+                    }
+                }
+
+#if DEBUG                               
+               if (dropped > highestDropped) highestDropped = dropped;
+               dropped = 0;
 #endif
-                curRock = rocks[rocksAdded++ % 5];
+                
+                curRock = rocks[rock++];
+                if (rock == 5) rock = 0;
+                rocksAdded++;                
+
 #if TIMED
                 if (rocksAdded % 5000000 == 0)
                 {                                    
                     long ms = sw.ElapsedMilliseconds;
-                    long minRem = ((rocksToAdd / 5000000) * ms) / 1000 / 60 / 60;
-                    //Console.Out.WriteLine("{4}%, Mins: {3}, Rocks Added: {0}, Height: {1}, Time: {2}", rocksAdded, g.GetTowerHeight().ToString(), ms, minRem, ((float)rocksAdded/(float)rocksToAdd)*(float)100);
-                    Console.Out.WriteLine("{3}%, Height: {4}, Rocks Added: {0}, Time: {1}, Hours Rem: {2}", rocksAdded, ms, minRem, ((float)rocksAdded / (float)rocksToAdd) * (float)100, g.GetTowerHeight());
+                    long minRem = ((rocksToAdd / 5000000) * ms) / 1000 / 60 / 60;                    
+                    Console.Out.WriteLine("{3}%, Height: {4}, Rocks Added: {0}, Hashes: {5}, Time: {1}, Hours Rem: {2}", rocksAdded, ms, minRem, ((float)rocksAdded / (float)rocksToAdd) * (float)100, g.Highest, hashes.Count);
                     sw.Restart();                    
                 }
 #endif
@@ -101,12 +142,14 @@ public class Day17 : BaseDay
             if (jet > _input[0].Length - 1) jet = 0;
 
             addNew = !g.DropRock();
-#if TIMED
+#if DEBUG
             dropped++;
 #endif
         }
 #if TIMED
         sw.Stop();
+#endif
+#if DEBUG
         Console.Out.WriteLine(highestDropped.ToString());
 #endif
     }
@@ -164,8 +207,8 @@ public class Day17 : BaseDay
 
     private class BitGrid
     {
-        private long[] _rows;
-        private long _highest;
+        public long[] Rows;
+        public long Highest;
         private BitRock _curRock;
         private int _rY;
         private readonly int _width;
@@ -173,21 +216,21 @@ public class Day17 : BaseDay
         public BitGrid(int width)
         {
             _width = width;
-            _rows = new long[width];
+            Rows = new long[width];
             for (int i = 1; i < width - 1; i++)
             {
-                _rows[i] = 0;
+                Rows[i] = 0;
             }
-            _rows[0] = long.MaxValue;
-            _rows[width - 1] = long.MaxValue;
+            Rows[0] = long.MaxValue;
+            Rows[width - 1] = long.MaxValue;
 
             // add base row to seventh bit
             for (int i = 1; i < width - 1; i++)
             {
-                _rows[i] |= 128L;
+                Rows[i] |= 128L;
             }
 
-            _highest = 0;
+            Highest = 0;
         }
 
         public void AddNewRock(BitRock curRock)
@@ -196,10 +239,10 @@ public class Day17 : BaseDay
             // shift bits to make sure we have seven rows free at start 
             for (int i = 1; i < _width - 1; i++)
             {
-                _rows[i] = _rows[i] << shift;
+                Rows[i] = Rows[i] << shift;
             }
 
-            _highest += shift;
+            Highest += shift;
             _curRock = curRock;
             _rY = 3;
         }
@@ -210,7 +253,7 @@ public class Day17 : BaseDay
             bool canPush = true;
             for (int y = 0; y < _curRock.W; y++)
             {
-                if ((_rows[newRy + y] & _curRock.SelectS(y)) != 0)
+                if ((Rows[newRy + y] & _curRock.SelectS(y)) != 0)
                 {
                     canPush = false;
                     break;
@@ -224,7 +267,7 @@ public class Day17 : BaseDay
             bool canDrop = true;
             for (int y = 0; y < _curRock.W; y++)
             {
-                if ((_rows[y + _rY] & _curRock.SelectD(y)) != 0) 
+                if ((Rows[y + _rY] & _curRock.SelectD(y)) != 0) 
                 {
                     canDrop = false;
                     break;
@@ -246,7 +289,7 @@ public class Day17 : BaseDay
             {
                 for (int y = 0; y < _curRock.W; y++)
                 {
-                    _rows[_rY + y] = _rows[_rY + y] | _curRock.SelectS(y);
+                    Rows[_rY + y] = Rows[_rY + y] | _curRock.SelectS(y);
                 }
             }
 
@@ -262,10 +305,10 @@ public class Day17 : BaseDay
             {
                 curBit = 0;
                 curBitHeight = 0;
-                if ((_rows[i] & curBit) == 1) continue;
+                if ((Rows[i] & curBit) == 1) continue;
                 curBit++;
                 curBitHeight++;
-                while ((_rows[i] & curBit) == 0)
+                while ((Rows[i] & curBit) == 0)
                 {
                     curBit = curBit << 1;
                     curBitHeight++;
@@ -275,10 +318,6 @@ public class Day17 : BaseDay
             return lowestBitHeight;
         }
 
-        public long GetTowerHeight()
-        {
-            return _highest;
-        }
         public void PrintTower(string msg)
         {
             if (_visualise)
@@ -291,7 +330,7 @@ public class Day17 : BaseDay
                 {
                     for (int y = 0; y < _width; y++)
                     {
-                        bool show = (_rows[y] & bit) == bit;
+                        bool show = (Rows[y] & bit) == bit;
                         if (y >= _rY && y < _rY + _curRock.W)
                             show = show || ((_curRock.SelectS(y - _rY) & bit) == bit);
                         if (y == 0)
@@ -303,7 +342,7 @@ public class Day17 : BaseDay
                     if (i == 0)
                     {
                         sb.Append("H: ");
-                        sb.Append(_highest.ToString());
+                        sb.Append(Highest.ToString());
                         sb.Append(", ");
                         sb.Append(msg);
                     }
@@ -311,6 +350,16 @@ public class Day17 : BaseDay
                     sb.Clear();
                 }
             }
+        }
+
+        internal string GetRowsAsStr()
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 1; i < _width - 1; i++)
+            {
+                sb.Append(Rows[i].ToString());
+            }
+            return sb.ToString();
         }
     }
 
