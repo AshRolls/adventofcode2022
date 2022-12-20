@@ -18,42 +18,48 @@ public class Day19 : BaseDay
 
     public override ValueTask<string> Solve_1()
     {
-        solve1();
+        //solve1();
         return new(_partOne);
     }
 
-    private struct Blueprint
+    private void solve1()
     {
-        public Blueprint(int number, int oreROre, int clayROre, int obsidianROre, int obsidianRClay, int geodeROre, int geodeRObsidian)
+        Blueprint[] blueprints = parseInput();
+
+        int totalQual = 0;
+        for(int i = 0; i < _input.Length; i++)
         {
-            Number = number;
-            OreROre = oreROre;
-            ClayROre = clayROre;
-            ObsidianROre = obsidianROre;
-            ObsidianRClay = obsidianRClay;
-            GeodeROre = geodeROre;
-            GeodeRObsidian= geodeRObsidian;
+            blueprints[i].GeodesMax = GetMaxGeodes(blueprints[i], 24);            
+            totalQual += blueprints[i].Quality;
+        }        
 
-            MaxOreR = Math.Max(Math.Max(Math.Max(OreROre, ClayROre), ObsidianROre), GeodeROre);
-            MaxClayR = ObsidianRClay;
-            MaxObsR = GeodeRObsidian;
-        }
-
-        public int Number;
-        public int OreROre;
-        public int ClayROre;
-        public int ObsidianROre;
-        public int ObsidianRClay;
-        public int GeodeROre;
-        public int GeodeRObsidian;
-        public int Quality;
-
-        public int MaxOreR;
-        public int MaxClayR;
-        public int MaxObsR;
+        _partOne = totalQual.ToString();
     }
 
-    private void solve1()
+    public override ValueTask<string> Solve_2()
+    {
+        solve2();
+        return new(_partTwo);
+    }
+
+    private void solve2()
+    {
+        Blueprint[] blueprints = parseInput();
+
+        int geodesMult = 1;
+        for (int i = 0; i < 3; i++)
+        {
+            if (i < _input.Length)
+            {
+                blueprints[i].GeodesMax = GetMaxGeodes(blueprints[i], 32);
+                geodesMult *= blueprints[i].GeodesMax;
+            }
+        }
+
+        _partTwo = geodesMult.ToString();
+    }
+
+    private Blueprint[] parseInput()
     {
         Blueprint[] blueprints = new Blueprint[_input.Length];
         for (int i = 0; i < _input.Length; i++)
@@ -62,24 +68,16 @@ public class Day19 : BaseDay
             blueprints[i] = new Blueprint(nums[0], nums[1], nums[2], nums[3], nums[4], nums[5], nums[6]);
         }
 
-        int totalQual = 0;
-        for(int i = 0; i < _input.Length; i++)
-        {
-            blueprints[i].Quality = blueprints[i].Number * GetMaxGeodes(blueprints[i]);
-            totalQual += blueprints[i].Quality;
-        }        
-
-        _partOne = totalQual.ToString();
+        return blueprints;
     }
 
-    private static int GetMaxGeodes(Blueprint bp)
+    private static int GetMaxGeodes(Blueprint bp, int maxMins)
     {
         Node startN = new Node(1, 0, 0, 0, 0, 0, 0, 0, 0);
 
         Stack<Node> stack = new Stack<Node>();
         stack.Push(startN);
 
-        const int maxMins = 24;
         int highestGeodes = 0;
 
         long nodeCount = 0;
@@ -88,7 +86,7 @@ public class Day19 : BaseDay
         {
             Node cur = stack.Pop();
             nodeCount++;
-            if (nodeCount % 250000000 == 0)
+            if (nodeCount % 500000000 == 0)
             {
                 Console.Out.WriteLine(nodeCount.ToString());
             }
@@ -102,9 +100,9 @@ public class Day19 : BaseDay
             if (cur.Min < maxMins)
             {
                 int minsRem = maxMins - cur.Min;
-                int gauss = AoCHelper.GetSumRange(cur.GeoRobots, cur.GeoRobots + minsRem) + cur.Geo;
+                int gaussGeo = AoCHelper.GetSumRange(cur.GeoRobots, cur.GeoRobots + minsRem) + cur.Geo;
 
-                if (highestGeodes >  gauss) continue;
+                if (highestGeodes >  gaussGeo) continue;
 
                 bool canOre = canBuildOreR(bp, cur);
                 bool canClay = canBuildClayR(bp, cur);
@@ -124,29 +122,29 @@ public class Day19 : BaseDay
                 else
                 {
                     //case BuildOptions.None: 
-                    if (!(canOre && canClay && canObs && canGeo))
-                    {                       
-                        addNode(stack, cur.OreRobots, cur.ClayRobots, cur.ObsRobots, cur.GeoRobots, 
-                            cur.Ore + cur.OreRobots, 
-                            cur.Clay + cur.ClayRobots, 
-                            cur.Obs + cur.ObsRobots, 
-                            cur.Geo + cur.GeoRobots, 
-                            cur.Min + 1);
-                    }
-
-                    //case BuildOptions.OreR:                
-                    if (canBuildOreR(bp, cur))
-                    {                                                
-                        addNode(stack, cur.OreRobots + 1, cur.ClayRobots, cur.ObsRobots, cur.GeoRobots,
-                            cur.Ore + cur.OreRobots - bp.OreROre,
+                    if (!(canOre && canClay && canObs))
+                    {
+                        addNode(stack, cur.OreRobots, cur.ClayRobots, cur.ObsRobots, cur.GeoRobots,
+                            cur.Ore + cur.OreRobots,
                             cur.Clay + cur.ClayRobots,
                             cur.Obs + cur.ObsRobots,
                             cur.Geo + cur.GeoRobots,
                             cur.Min + 1);
                     }
 
+                    //case BuildOptions.ObsR:
+                    if (canObs)
+                    {
+                        addNode(stack, cur.OreRobots, cur.ClayRobots, cur.ObsRobots + 1, cur.GeoRobots,
+                            cur.Ore + cur.OreRobots - bp.ObsidianROre,
+                            cur.Clay + cur.ClayRobots - bp.ObsidianRClay,
+                            cur.Obs + cur.ObsRobots,
+                            cur.Geo + cur.GeoRobots,
+                            cur.Min + 1);
+                    }
+
                     //case BuildOptions.ClayR:
-                    if (canBuildClayR(bp, cur))
+                    if (canClay)
                     {
                         addNode(stack, cur.OreRobots, cur.ClayRobots + 1, cur.ObsRobots, cur.GeoRobots,
                             cur.Ore + cur.OreRobots - bp.ClayROre,
@@ -156,16 +154,16 @@ public class Day19 : BaseDay
                             cur.Min + 1);
                     }
 
-                    //case BuildOptions.ObsR:
-                    if (canBuildObsR(bp, cur))
-                    {                        
-                        addNode(stack, cur.OreRobots, cur.ClayRobots, cur.ObsRobots + 1, cur.GeoRobots,
-                            cur.Ore + cur.OreRobots - bp.ObsidianROre,
-                            cur.Clay + cur.ClayRobots - bp.ObsidianRClay,
+                    //case BuildOptions.OreR:                
+                    if (canOre)
+                    {                                                
+                        addNode(stack, cur.OreRobots + 1, cur.ClayRobots, cur.ObsRobots, cur.GeoRobots,
+                            cur.Ore + cur.OreRobots - bp.OreROre,
+                            cur.Clay + cur.ClayRobots,
                             cur.Obs + cur.ObsRobots,
                             cur.Geo + cur.GeoRobots,
                             cur.Min + 1);
-                    }
+                    }                                        
                 }  // end if cangeo                     
             } // end if max mins                               
         } // end stack
@@ -225,21 +223,38 @@ public class Day19 : BaseDay
         public int Geo;
 
         public int Min;
+    }
 
-        public override string ToString()
+    private struct Blueprint
+    {
+        public Blueprint(int number, int oreROre, int clayROre, int obsidianROre, int obsidianRClay, int geodeROre, int geodeRObsidian)
         {
-            return Min + " " + Geo;
+            Number = number;
+            OreROre = oreROre;
+            ClayROre = clayROre;
+            ObsidianROre = obsidianROre;
+            ObsidianRClay = obsidianRClay;
+            GeodeROre = geodeROre;
+            GeodeRObsidian = geodeRObsidian;
+
+            MaxOreR = Math.Max(Math.Max(Math.Max(OreROre, ClayROre), ObsidianROre), GeodeROre);
+            MaxClayR = ObsidianRClay;
+            MaxObsR = GeodeRObsidian;           
         }
-    }
 
-    public override ValueTask<string> Solve_2()
-    {
-        solve2();
-        return new(_partTwo);
-    }
+        public int Number;
+        public int OreROre;
+        public int ClayROre;
+        public int ObsidianROre;
+        public int ObsidianRClay;
+        public int GeodeROre;
+        public int GeodeRObsidian;
 
-    private void solve2()
-    {
-        _partTwo = "Not Solved";
+        public readonly int Quality => Number * GeodesMax;
+        public int GeodesMax;
+
+        public int MaxOreR;
+        public int MaxClayR;
+        public int MaxObsR;
     }
 }
