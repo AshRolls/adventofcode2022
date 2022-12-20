@@ -89,5 +89,10 @@ namespace AdventOfCode
                 return builder.ToString();
             }
         }
+
+        public static int GetSumRange(int a, int b)
+        {
+            return (b * (b + 1) - (a - 1) * a) / 2;
+        }
     }    
 }
