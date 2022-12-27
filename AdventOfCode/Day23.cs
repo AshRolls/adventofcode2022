@@ -67,10 +67,8 @@ public class Day23 : BaseDay
         Dictionary<int, List<(int, int)>> positions = setupPositions();
         List<(int, int)> all = new List<(int, int)>() { (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0) };
 
-        int w, h;
         int stationary = 0;
         int i = 0;
-
         while (true)
         {
             // find nearest neighbours
