@@ -34,7 +34,7 @@ public class Day23 : BaseDay
         for (int i = 0; i < 10; i++)
         {
             // find nearest neighbours
-            findNearestNeighbours(elves);
+            findNearestNeighbours(2, elves);
 
             // set proposed dir
             stationary = 0;
@@ -70,26 +70,29 @@ public class Day23 : BaseDay
         int w, h;
         int stationary = 0;
         int i = 0;
-        while(true)
+
+        while (true)
         {
             // find nearest neighbours
-            findNearestNeighbours(elves);
+            if (i % 5 == 0) findNearestNeighbours(7, elves);
 
             // set proposed dir
             stationary = 0;
             foreach (Elf e in elves)
             {
-                if (e.SetProposedDirection(i, positions, all)) stationary++;
+                if (e.SetProposedDirection(i, positions, all, true)) stationary++;
             }
             if (stationary == elves.Count) break;
 
             // move non-clashing elves
             moveElves(elves);
             i++;
-            if (i%25== 0)
+#if DEBUG
+            if (i % 25 == 0)
             {
                 Console.Out.WriteLine("{0}: {1}/{2}", i, stationary, elves.Count);
             }
+#endif
         }
 
         _partTwo = (i+1).ToString();
@@ -111,7 +114,7 @@ public class Day23 : BaseDay
         foreach (Elf e in elves) e.MoveInProposedDirection();
     }
 
-    private static void findNearestNeighbours(List<Elf> elves)
+    private static void findNearestNeighbours(int maxDist, List<Elf> elves)
     {
         for (int j = 0; j < elves.Count; j++)
         {
@@ -121,7 +124,7 @@ public class Day23 : BaseDay
             {
                 if (checkElf == e) continue;
                 int dist = AoCHelper.GetDiagonalDist(e.Pos.X, e.Pos.Y, checkElf.Pos.X, checkElf.Pos.Y);
-                if (dist <= 2) e.NNs.Add(checkElf, dist);
+                if (dist <= maxDist) e.NNs.Add(checkElf, dist);
             }
         }
     }
@@ -154,8 +157,12 @@ public class Day23 : BaseDay
             NNs = new Dictionary<Elf, int>();
         }
 
-        public bool SetProposedDirection(int round, Dictionary<int, List<(int, int)>> positions, List<(int, int)> all)
+        public bool SetProposedDirection(int round, Dictionary<int, List<(int, int)>> positions, List<(int, int)> all, bool recalcNN = false)
         {
+            if (recalcNN) 
+                foreach (Elf checkElf in NNs.Keys)
+                    NNs[checkElf] = AoCHelper.GetDiagonalDist(Pos.X, Pos.Y, checkElf.Pos.X, checkElf.Pos.Y);
+            
             if (NNs.Values.Select(x => x).Where(x => x > 1).Count() == NNs.Values.Count()) return true;
 
             for (int i = 0; i < 4; i++)
@@ -163,9 +170,9 @@ public class Day23 : BaseDay
                 bool found = false;
                 foreach ((int x, int y) c in positions[(round + i) % 4])
                 {
-                    foreach (Elf nn in NNs.Keys)
+                    foreach (KeyValuePair<Elf,int> nn in NNs)
                     {
-                        if (nn.Pos == (this.Pos.X + c.x, this.Pos.Y + c.y))
+                        if (nn.Value <= 2 && nn.Key.Pos == (this.Pos.X + c.x, this.Pos.Y + c.y))
                         {
                             found = true;
                             break;
