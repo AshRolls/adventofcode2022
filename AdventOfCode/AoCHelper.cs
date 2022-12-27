@@ -1,6 +1,8 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Xml.Linq;
 
 namespace AdventOfCode
 {
@@ -68,6 +70,14 @@ namespace AdventOfCode
         public static int GetManhattanDist(int fromX, int fromY, int toX, int toY)
         {
             return Math.Abs(fromX - toX) + Math.Abs(fromY - toY);
+        }
+
+        // Chebyshev distance (diagonal move costs the same as lateral
+        public static int GetDiagonalDist(int fromX, int fromY, int toX, int toY)
+        {
+            int dx = Math.Abs(fromX - toX);
+            int dy = Math.Abs(fromY - toY);
+            return (dx + dy) - Math.Min(dx, dy);
         }
 
         public const char SolidBlockChar = '\u2588';
