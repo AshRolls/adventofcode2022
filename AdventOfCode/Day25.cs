@@ -29,15 +29,9 @@ public class Day25 : BaseDay
             {
                 switch (line[i])
                 {
-                    case '=':
-                        vals.Add(-2);
-                        break;
-                    case '-':
-                        vals.Add(-1);
-                        break;
-                    default:
-                        vals.Add(int.Parse(line[i].ToString()));
-                        break;
+                    case '=': vals.Add(-2); break;
+                    case '-': vals.Add(-1); break;
+                    default: vals.Add(int.Parse(line[i].ToString())); break;
                 }
             }
             snafuIn.Add(vals);
@@ -71,8 +65,7 @@ public class Day25 : BaseDay
             snafuS += snafuDigit[(newTotal) % 5];
         }
      
-        snafuS = new String(snafuS.Reverse().ToArray());
-        _partOne = snafuS;
+        _partOne = new String(snafuS.Reverse().ToArray());
     }
 
     public override ValueTask<string> Solve_2()
@@ -83,6 +76,6 @@ public class Day25 : BaseDay
 
     private void solve2()
     {
-        _partTwo = "Not Solved";
+        _partTwo = "Not Set";
     }
 }
